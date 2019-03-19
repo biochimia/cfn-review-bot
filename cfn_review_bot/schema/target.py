@@ -4,7 +4,7 @@ from . import aws
 from . import util
 
 
-DEFAULT_ROLE_NAME = 'AltocumulusReviewer'
+DEFAULT_ROLE_NAME = 'CfnReviewBot'
 
 
 SingleTargetSchema = schema.Schema({
