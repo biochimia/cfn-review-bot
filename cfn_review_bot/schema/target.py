@@ -10,7 +10,7 @@ DEFAULT_ROLE_NAME = 'CfnReviewBot'
 SingleTargetSchema = schema.Schema({
   'account-id': aws.AccountId,
   schema.Optional('region'): util.OneOrMany(aws.Region),
-  schema.Optional('role-name'): util.OneOrMany(str),
+  schema.Optional('role-name'): str,
   schema.Optional('tag', default={}): {str: str},
 })
 

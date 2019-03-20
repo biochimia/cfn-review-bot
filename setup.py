@@ -1,7 +1,7 @@
 import setuptools
 
 
-version = '0.2.1'
+version = '0.2.2'
 
 with open('README.md') as readme:
     long_description = readme.read()
