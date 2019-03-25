@@ -1,6 +1,6 @@
 import os.path
 
-from .dirloader import load_directory
+from .dirloader import load_directory, normalize_key
 from .loader import load_file
 from .merge import deep_merge
 from .schema.target import TargetConfigSchema
@@ -64,7 +64,8 @@ def load(config_file):
 
     template = {}
     for template_reference in stack['template']:
-      template = deep_merge(template, templates[template_reference])
+      cur_template = templates[normalize_key(template_reference)]
+      template = deep_merge(template, cur_template)
 
     for tn in stack.get('target', default_target_names):
       for target in all_targets[tn]:

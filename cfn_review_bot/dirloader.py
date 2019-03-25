@@ -10,10 +10,7 @@ DIRECTORY_BLACKLIST = [
 ]
 
 
-def _key_from_path(root, path):
-  proto_key = os.path.splitext(
-    os.path.relpath(path, start=root))[0]
-
+def normalize_key(proto_key):
   key = None
 
   it = iter(proto_key)
@@ -36,6 +33,11 @@ def _key_from_path(root, path):
       key += ch
 
   return key
+
+
+def _key_from_path(root, path):
+  return normalize_key(os.path.splitext(
+    os.path.relpath(path, start=root))[0])
 
 
 def filter_directories(dirnames):
