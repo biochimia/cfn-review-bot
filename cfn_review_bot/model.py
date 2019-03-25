@@ -2,6 +2,7 @@ import os.path
 
 from .dirloader import load_directory
 from .loader import load_file
+from .merge import deep_merge
 from .schema.target import TargetConfigSchema
 from .schema.template import TemplateSchema
 from .schema.stack import StackSchema
@@ -58,9 +59,12 @@ def load(config_file):
   all_targets = targets['target']
 
   for stack_name, stack in stacks.items():
-    template = templates[stack['template']]
     capabilities = stack['capability']
     parameters = stack['parameter']
+
+    template = {}
+    for template_reference in stack['template']:
+      template = deep_merge(template, templates[template_reference])
 
     for tn in stack.get('target', default_target_names):
       for target in all_targets[tn]:

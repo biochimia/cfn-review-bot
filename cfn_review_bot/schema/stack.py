@@ -4,7 +4,7 @@ from . import util
 
 
 StackSchema = schema.Schema({
-  'template': str,
+  'template': util.OneOrMany(str),
   schema.Optional('name'): str,
   schema.Optional('target'): util.OneOrMany(str),
   schema.Optional('capability', default=[]): util.OneOrMany(str),
