@@ -7,6 +7,7 @@ clean-deps:
 
 clean-dist:
 	@rm -rf build cfn_review_bot.egg-info dist
+	@rm -f cfn_review_bot/package-version.json
 
 deps-dist: .venv-dist/.env-ready
 
@@ -17,6 +18,7 @@ deps-dist: .venv-dist/.env-ready
 
 dist: clean-dist deps-dist
 	@python setup.py sdist bdist_wheel
+	@rm -f cfn_review_bot/package-version.json
 
 release: dist
 	@.venv-dist/bin/pip install twine
