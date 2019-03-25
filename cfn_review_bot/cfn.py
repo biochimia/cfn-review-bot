@@ -163,4 +163,5 @@ class Target:
     return (
       new_stacks or None,
       updated_stacks or None,
-      orphaned_stacks or None)
+      orphaned_stacks or None,
+      unmanaged_stacks or None)

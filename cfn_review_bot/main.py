@@ -32,7 +32,7 @@ def process_single_target(sess, session_name, target_name, target_config):
 
   tgt = cfn.Target(sess.cloudformation(region=region))
 
-  new, updated, orphaned = tgt.process_stacks(
+  new, updated, orphaned, unmanaged = tgt.process_stacks(
     cfn.Stack(**stack) for stack in stacks.values())
 
   if new:
@@ -41,6 +41,8 @@ def process_single_target(sess, session_name, target_name, target_config):
     print('Updated stacks:', updated)
   if orphaned:
     print('Orphaned stacks:', orphaned)
+  if unmanaged:
+    print('Unmanaged stacks:', len(unmanaged))
 
 
 def _main():
