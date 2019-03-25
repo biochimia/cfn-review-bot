@@ -105,7 +105,7 @@ class Target:
 
       deployed.is_outdated = (content_hash != deployed.content_hash)
       if not deployed.is_outdated:
-        return
+        return None, None, None
 
       change_set_type = 'UPDATE'
     else:
@@ -157,7 +157,8 @@ class Target:
       change_set_type, stack_id, change_set_id = self._process_stack(s)
 
       stack_actions[change_set_type].append(s.name)
-      change_sets.append((stack_id, change_set_id))
+      if change_set_type:
+        change_sets.append((stack_id, change_set_id))
 
     for n, s in self.deployed_stacks.items():
       if not s.content_hash:
