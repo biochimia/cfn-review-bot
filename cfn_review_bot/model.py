@@ -49,8 +49,10 @@ def load(config_file):
   targets = load_file(config_file, schema=TargetConfigSchema)
   targets = process_target_config(targets)
 
-  templates = dict(load_directory(targets['template-root'], schema=TemplateSchema))
-  stacks = dict(load_directory(targets['stack-root'], schema=StackSchema))
+  templates = dict(
+    load_directory(targets['template-root'], schema=TemplateSchema))
+  stacks = dict(load_directory(
+    targets['stack-root'], schema=StackSchema, drop_suffix='stack'))
 
   default_target_names = targets['default']
   all_targets = targets['target']

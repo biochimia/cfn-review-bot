@@ -48,7 +48,7 @@ def filter_directories(dirnames):
     yield d
 
 
-def load_directory(root, *, schema=None):
+def load_directory(root, *, drop_suffix=None, schema=None):
   seen = set()
 
   for path, dirnames, filenames in os.walk(root):
@@ -65,6 +65,9 @@ def load_directory(root, *, schema=None):
         continue
 
       key = _key_from_path(root, filepath)
+      if (drop_suffix is not None
+          and key.endswith('-{}'.format(drop_suffix))):
+        key = key[:-len(drop_suffix)-1]
 
       assert key not in seen
       seen.add(key)
