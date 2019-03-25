@@ -32,7 +32,12 @@ class Stack:
 
   @property
   def template_body(self):
-    return self.template.__raw__
+    try:
+      return self.template.__raw__
+    except AttributeError:
+      pass
+
+    return loader.dump_yaml(self.template, stream=None)
 
   @property
   def canonical_content(self):
