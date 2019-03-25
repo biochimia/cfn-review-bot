@@ -126,7 +126,7 @@ class Target:
     tags = [{'Key': k, 'Value': v} for k, v in stack.tags.items()]
     tags.append({'Key': CONTENT_HASH_TAG, 'Value': content_hash})
 
-    print(self.cfn.create_change_set(
+    change_set = self.cfn.create_change_set(
       StackName=stack.name,
       TemplateBody=stack.template_body,
       Capabilities=stack.capabilities,
@@ -134,8 +134,9 @@ class Target:
       ChangeSetName=content_hash,
       Parameters=parameters,
       Tags=tags,
-    ))
-    return change_set_type
+    )
+
+    return change_set_type, change_set['StackId'], change_set['Id']
 
   def process_stacks(self, managed_stacks):
     new_stacks = []
@@ -151,8 +152,12 @@ class Target:
       'UPDATE': updated_stacks,
     }
 
+    change_sets = []
     for s in managed_stacks:
-      stack_actions[self._process_stack(s)].append(s.name)
+      change_set_type, stack_id, change_set_id = self._process_stack(s)
+
+      stack_actions[change_set_type].append(s.name)
+      change_sets.append((stack_id, change_set_id))
 
     for n, s in self.deployed_stacks.items():
       if not s.content_hash:
@@ -161,6 +166,7 @@ class Target:
         orphaned_stacks.append(n)
 
     return (
+      change_sets or None,
       new_stacks or None,
       updated_stacks or None,
       orphaned_stacks or None,
