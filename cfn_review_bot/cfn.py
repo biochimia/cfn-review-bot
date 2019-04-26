@@ -1,12 +1,13 @@
 import hashlib
 import json
 
-from . import aws
 from . import error
 from . import loader
 
+from .merge import deep_merge
 
-CONTENT_HASH_TAG = 'cfn-review-bot-hash'
+
+CFN_METADATA_PARAMETER = 'ReviewBotMetadata'
 
 
 class ValidationError(error.Error):
@@ -29,15 +30,6 @@ class Stack:
     self.capabilities = capabilities or []
     self.parameters = parameters or {}
     self.tags = tags or {}
-
-  @property
-  def template_body(self):
-    try:
-      return self.template.__raw__
-    except AttributeError:
-      pass
-
-    return loader.dump_yaml(self.template, stream=None)
 
   @property
   def canonical_content(self):
@@ -72,12 +64,15 @@ class DeployedStack(dict):
     return self.status not in ('REVIEW_IN_PROGRESS', 'ROLLBACK_COMPLETE')
 
   @property
-  def tags(self):
-    return { t['Key']: t['Value'] for t in self['Tags'] }
+  def parameters(self):
+    return {
+      p['ParameterKey']: p['ParameterValue']
+      for p in self.get('Parameters') or {}
+    }
 
   @property
   def content_hash(self):
-    return self.tags.get(CONTENT_HASH_TAG)
+    return self.parameters.get(CFN_METADATA_PARAMETER)
 
 
 class Target:
@@ -116,7 +111,17 @@ class Target:
     else:
       change_set_type = 'CREATE'
 
-    v = self.cfn.validate_template(TemplateBody=stack.template_body)
+    template = deep_merge(
+      {
+        'Parameters': {
+          CFN_METADATA_PARAMETER: {'Type': 'String'}
+        }
+      },
+      stack.template)
+
+    template_body = loader.dump_yaml(template, stream=None)
+    v = self.cfn.validate_template(TemplateBody=template_body)
+
     for cap in v.get('Capabilities', []):
       if cap not in stack.capabilities:
         reason = v.get('CapabilitiesReason', '(no reason provided)')
@@ -125,15 +130,16 @@ class Target:
           .format(cap, stack.name, reason))
 
     parameters = [
+      {'ParameterKey': CFN_METADATA_PARAMETER, 'ParameterValue': content_hash}]
+    parameters.extend(
       {'ParameterKey': k, 'ParameterValue': v}
-      for k, v in stack.parameters.items() ]
+      for k, v in stack.parameters.items())
 
     tags = [{'Key': k, 'Value': v} for k, v in stack.tags.items()]
-    tags.append({'Key': CONTENT_HASH_TAG, 'Value': content_hash})
 
     change_set = self.cfn.create_change_set(
       StackName=stack.name,
-      TemplateBody=stack.template_body,
+      TemplateBody=template_body,
       Capabilities=stack.capabilities,
       ChangeSetType=change_set_type,
       ChangeSetName=content_hash,
