@@ -10,15 +10,22 @@ from . import model
 
 def process_arguments():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--profile')
-  parser.add_argument('--region')
-  parser.add_argument('--session-name')
-  parser.add_argument('--config-file', default='cfn-targets.yaml')
+  parser.add_argument(
+    '--profile', help='Name of AWS configuration profile in ~/.aws/config')
+  parser.add_argument('--region', help='Name of default AWS region')
+  parser.add_argument(
+    '--session-prefix', help='''Prefix for the session name to use when assuming
+    IAM roles. If not specified, this defaults to a random UUID. This prefix
+    will be combined with the name of the different deployment targets to
+    produce the session name.''')
+  parser.add_argument(
+    '--config-file', default='cfn-targets.yaml', help='''Configuration file that
+    defines deployment targets''')
 
   return parser.parse_args()
 
 
-def process_single_target(sess, session_name, target_name, target_config):
+def process_single_target(sess, session_prefix, target_name, target_config):
   account_id = target_config['account-id']
   role_name = target_config['role-name']
   region = target_config['region']
@@ -27,7 +34,7 @@ def process_single_target(sess, session_name, target_name, target_config):
   if 'role-name' in target_config:
     sess = sess.assume_role(
       role_arn='arn:aws:iam::{}:role/{}'.format(account_id, role_name),
-      session_name='{}+{}'.format(session_name, target_name),
+      session_name='{}+{}'.format(session_prefix, target_name),
       session_duration=15*60, # seconds
     )
 
@@ -81,9 +88,8 @@ def _main():
   params = process_arguments()
 
   session = aws.Session(profile=params.profile, region=params.region)
+  session_prefix = params.session_prefix or str(uuid.uuid4())
   full_model = model.load(params.config_file)
-
-  session_name = params.session_name or str(uuid.uuid4())
 
   for target_name, targets in full_model['target'].items():
     for target in targets:
@@ -92,7 +98,7 @@ def _main():
         continue
 
       target_results = process_single_target(
-        session, session_name, target_name, target)
+        session, session_prefix, target_name, target)
       print_target_results(target_results)
 
 
