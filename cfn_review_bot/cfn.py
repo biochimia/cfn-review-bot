@@ -153,6 +153,7 @@ class Target:
   def process_stacks(self, managed_stacks, *, dry_run=False):
     new_stack_count = 0
     updated_stack_count = 0
+    adopted_stack_count = 0
     unmanaged_stack_count = 0
 
     change_set_ids = []
@@ -175,6 +176,8 @@ class Target:
     for n, s in self.deployed_stacks.items():
       if hasattr(s, 'is_outdated'):
         # Managed (or now adopted) stack
+        if not s.content_hash:
+          adopted_stack_count += 1
         continue
 
       if s.content_hash:
@@ -189,6 +192,7 @@ class Target:
         'total': len(self.deployed_stacks) + new_stack_count,
         'new': new_stack_count,
         'updated': updated_stack_count,
+        'adopted': adopted_stack_count,
         'orphaned': len(orphaned_stacks),
         'unmanaged': unmanaged_stack_count,
       },

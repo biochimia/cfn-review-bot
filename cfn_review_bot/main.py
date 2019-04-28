@@ -82,7 +82,10 @@ def print_target_results(target_results):
   if counts['new']:
     count_summary.append('{} new'.format(counts['new']))
   if counts['updated']:
-    count_summary.append('{} updated'.format(counts['updated']))
+    updated_summary = '{} updated'.format(counts['updated'])
+    if counts['adopted']:
+      updated_summary += ' ({} adopted)'.format(counts['adopted'])
+    count_summary.append(updated_summary)
   if counts['orphaned']:
     count_summary.append('{} orphaned'.format(counts['orphaned']))
 
