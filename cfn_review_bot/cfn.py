@@ -170,10 +170,14 @@ class Target:
       change_set_ids.append(change_set_id)
 
     for n, s in self.deployed_stacks.items():
-      if not s.content_hash:
-        unmanaged_stack_count += 1
-      elif not hasattr(s, 'is_outdated'):
+      if hasattr(s, 'is_outdated'):
+        # Managed (or now adopted) stack
+        continue
+
+      if s.content_hash:
         orphaned_stacks.append(n)
+      else:
+        unmanaged_stack_count += 1
 
     return {
       'change-set-id': change_set_ids,
