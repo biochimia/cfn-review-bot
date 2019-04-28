@@ -1,4 +1,5 @@
 import argparse
+import re
 import textwrap
 import uuid
 
@@ -8,6 +9,9 @@ from . import cfn
 from . import error
 from . import loader
 from . import model
+
+
+VALID_SESSION_NAME = re.compile(r'[\w+=,.@-]*')
 
 
 def process_arguments():
@@ -30,6 +34,11 @@ def process_arguments():
   return parser.parse_args()
 
 
+def _session_name(session_prefix, target_name):
+  result = '{}+{}'.format(session_prefix, target_name)
+  return '-'.join(VALID_SESSION_NAME.findall(result))
+
+
 def process_single_target(
   sess, session_prefix, target_name, target_config, *, dry_run=False):
 
@@ -41,7 +50,7 @@ def process_single_target(
   if 'role-name' in target_config:
     sess = sess.assume_role(
       role_arn='arn:aws:iam::{}:role/{}'.format(account_id, role_name),
-      session_name='{}+{}'.format(session_prefix, target_name),
+      session_name=_session_name(session_prefix, target_name),
       session_duration=15*60, # seconds
     )
 
