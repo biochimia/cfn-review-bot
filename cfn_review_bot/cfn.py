@@ -91,7 +91,7 @@ class Target:
 
     return self._stack
 
-  def _process_stack(self, stack, *, dry_run=False):
+  def process_single_stack(self, stack, *, dry_run=False):
     content_hash = stack.content_hash
 
     deployed = self.deployed_stacks.get(stack.name)
@@ -159,7 +159,7 @@ class Target:
     orphaned_stacks = []
 
     for s in managed_stacks:
-      change_set_type, change_set_id = self._process_stack(s, dry_run=dry_run)
+      change_set_type, change_set_id = self.process_single_stack(s, dry_run=dry_run)
 
       if change_set_type is None:
         continue
