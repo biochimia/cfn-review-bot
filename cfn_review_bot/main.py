@@ -23,11 +23,16 @@ def process_arguments():
   parser.add_argument(
     '--config-file', default='cfn-targets.yaml', help='''Configuration file that
     defines deployment targets''')
+  parser.add_argument(
+    '--dry-run', '-n', action='store_true', help='''Evaluate targets, and
+    validate stacks, but skip creation of change-sets''')
 
   return parser.parse_args()
 
 
-def process_single_target(sess, session_prefix, target_name, target_config):
+def process_single_target(
+  sess, session_prefix, target_name, target_config, *, dry_run=False):
+
   account_id = target_config['account-id']
   role_name = target_config['role-name']
   region = target_config['region']
@@ -42,7 +47,7 @@ def process_single_target(sess, session_prefix, target_name, target_config):
 
   tgt = cfn.Target(sess.cloudformation(region=region))
   target_results = tgt.process_stacks(
-    cfn.Stack(**stack) for stack in stacks.values())
+    (cfn.Stack(**stack) for stack in stacks.values()), dry_run=dry_run)
 
   target_results.update({
     'name': target_name,
@@ -79,9 +84,10 @@ def print_target_results(target_results):
     'Stacks: {summary} (total: {c[total]}, unmanaged: {c[unmanaged]})'
     .format(summary=' | '.join(count_summary), c=counts))
 
-  print('Change sets:')
-  for csid in target_results['change-set-id']:
-    print('- {}'.format(csid))
+  if target_results['change-set-id']:
+    print('Change sets:')
+    for csid in target_results['change-set-id']:
+      print('- {}'.format(csid))
 
   print()
 
@@ -117,7 +123,7 @@ def _main():
         continue
 
       target_results = process_single_target(
-        session, session_prefix, target_name, target)
+        session, session_prefix, target_name, target, dry_run=params.dry_run)
       print_target_results(target_results)
 
 

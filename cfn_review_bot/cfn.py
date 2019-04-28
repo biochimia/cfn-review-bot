@@ -91,7 +91,7 @@ class Target:
 
     return self._stack
 
-  def _process_stack(self, stack):
+  def _process_stack(self, stack, *, dry_run=False):
     content_hash = stack.content_hash
 
     deployed = self.deployed_stacks.get(stack.name)
@@ -136,19 +136,21 @@ class Target:
 
     tags = [{'Key': k, 'Value': v} for k, v in stack.tags.items()]
 
-    change_set = self.cfn.create_change_set(
-      StackName=stack.name,
-      TemplateBody=template_body,
-      Capabilities=stack.capabilities,
-      ChangeSetType=change_set_type,
-      ChangeSetName=content_hash,
-      Parameters=parameters,
-      Tags=tags,
-    )
+    change_set_id = None
+    if not dry_run:
+      change_set_id = self.cfn.create_change_set(
+        StackName=stack.name,
+        TemplateBody=template_body,
+        Capabilities=stack.capabilities,
+        ChangeSetType=change_set_type,
+        ChangeSetName=content_hash,
+        Parameters=parameters,
+        Tags=tags,
+      )['Id']
 
-    return change_set_type, change_set['Id']
+    return change_set_type, change_set_id
 
-  def process_stacks(self, managed_stacks):
+  def process_stacks(self, managed_stacks, *, dry_run=False):
     new_stack_count = 0
     updated_stack_count = 0
     unmanaged_stack_count = 0
@@ -157,7 +159,7 @@ class Target:
     orphaned_stacks = []
 
     for s in managed_stacks:
-      change_set_type, change_set_id = self._process_stack(s)
+      change_set_type, change_set_id = self._process_stack(s, dry_run=dry_run)
 
       if change_set_type is None:
         continue
@@ -167,7 +169,8 @@ class Target:
       elif change_set_type == 'UPDATE':
         updated_stack_count += 1
 
-      change_set_ids.append(change_set_id)
+      if change_set_id is not None:
+        change_set_ids.append(change_set_id)
 
     for n, s in self.deployed_stacks.items():
       if hasattr(s, 'is_outdated'):
