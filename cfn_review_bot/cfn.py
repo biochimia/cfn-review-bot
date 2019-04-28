@@ -35,7 +35,6 @@ class Stack:
   def canonical_content(self):
     return json.dumps(
       {
-        'name': self.name,
         'template': self.template,
         'parameters': self.parameters,
         'tags': self.tags,
