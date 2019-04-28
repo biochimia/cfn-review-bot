@@ -70,6 +70,14 @@ class Session:
       provider = cred_chain.get_provider('assume-role')
       provider.cache = botocore.credentials.JSONFileCache(AWSCLI_CACHE_DIR)
 
+  @property
+  def profile_name(self):
+    return self._session.profile_name
+
+  @property
+  def region_name(self):
+    return self._session.region_name
+
   # Adapted from:
   # https://github.com/boto/botocore/issues/761#issuecomment-426037853
   def assume_role(self, *, role_arn, session_duration=None, session_name=None):

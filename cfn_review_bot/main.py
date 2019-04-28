@@ -1,6 +1,8 @@
 import argparse
+import textwrap
 import uuid
 
+from . import __version_info__
 from . import aws
 from . import cfn
 from . import error
@@ -89,6 +91,23 @@ def _main():
 
   session = aws.Session(profile=params.profile, region=params.region)
   session_prefix = params.session_prefix or str(uuid.uuid4())
+
+  print(textwrap.dedent(
+    '''
+    cfn-review-bot (version {vi.version}, git {vi.git_revision})
+
+    * Config:               {p.config_file}
+    * AWS profile:          {s.profile_name}
+    * Default region:       {s.region_name}
+    * Session name prefix:  {session_prefix}
+    ''')
+    .lstrip()
+    .format(
+      p=params,
+      s=session,
+      session_prefix=session_prefix,
+      vi=__version_info__))
+
   full_model = model.load(params.config_file)
 
   for target_name, targets in full_model['target'].items():
