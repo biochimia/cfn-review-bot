@@ -28,19 +28,26 @@ def process_arguments():
     '--config-file', default='cfn-targets.yaml', help='''Configuration file that
     defines deployment targets''')
   parser.add_argument(
+    '--project', default='', help='''A project identifier. This can be used to
+    distinguish CloudFormation stacks managed by independent cfn-review-bot
+    setups. Namely, it stacks managed in other projects from being marked
+    orphaned.''')
+  parser.add_argument(
     '--dry-run', '-n', action='store_true', help='''Evaluate targets, and
     validate stacks, but skip creation of change-sets''')
 
   return parser.parse_args()
 
 
-def _session_name(session_prefix, target_name):
-  result = '{}+{}'.format(session_prefix, target_name)
+def _session_name(session_prefix, target_name, project):
+  result = '{}+{}'.format(session_prefix, target_name, project)
+  if project:
+    result += '@{}'.format(project)
   return '-'.join(VALID_SESSION_NAME.findall(result))
 
 
 def process_single_target(
-  sess, session_prefix, target_name, target_config, *, dry_run=False):
+  sess, session_prefix, target_name, target_config, *, project, dry_run=False):
 
   account_id = target_config['account-id']
   role_name = target_config['role-name']
@@ -50,11 +57,11 @@ def process_single_target(
   if 'role-name' in target_config:
     sess = sess.assume_role(
       role_arn='arn:aws:iam::{}:role/{}'.format(account_id, role_name),
-      session_name=_session_name(session_prefix, target_name),
+      session_name=_session_name(session_prefix, target_name, project),
       session_duration=15*60, # seconds
     )
 
-  tgt = cfn.Target(sess.cloudformation(region=region))
+  tgt = cfn.Target(sess.cloudformation(region=region), project=project)
   target_results = tgt.process_stacks(
     (cfn.Stack(**stack) for stack in stacks.values()), dry_run=dry_run)
 
@@ -114,6 +121,7 @@ def _main():
     '''
     cfn-review-bot (version {vi.version}, git {vi.git_revision})
 
+    * Project:              {p.project}
     * Config:               {p.config_file}
     * AWS profile:          {s.profile_name}
     * Default region:       {s.region_name}
@@ -135,7 +143,13 @@ def _main():
         continue
 
       target_results = process_single_target(
-        session, session_prefix, target_name, target, dry_run=params.dry_run)
+        session,
+        session_prefix,
+        target_name,
+        target,
+        project=params.project,
+        dry_run=params.dry_run)
+
       print_target_results(target_results)
 
 

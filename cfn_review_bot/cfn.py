@@ -54,6 +54,11 @@ class Stack:
 
 
 class DeployedStack(dict):
+  def __init__(self, other, *, metadata_parameter, metadata_suffix):
+    super().__init__(other)
+    self.metadata_parameter = metadata_parameter
+    self.metadata_suffix = metadata_suffix
+
   @property
   def status(self):
     return self['StackStatus']
@@ -71,12 +76,21 @@ class DeployedStack(dict):
 
   @property
   def content_hash(self):
-    return self.parameters.get(CFN_METADATA_PARAMETER)
+    metadata = self.parameters.get(self.metadata_parameter)
+    if (metadata is not None
+        and metadata.endswith(self.metadata_suffix)):
+      return metadata[:-len(self.metadata_suffix)]
 
 
 class Target:
-  def __init__(self, cfn):
+  metadata_parameter = CFN_METADATA_PARAMETER
+  metadata_suffix = ''
+
+  def __init__(self, cfn, *, project):
     self.cfn = cfn
+
+    if project:
+      self.metadata_suffix = '@{}'.format(project)
 
   @property
   def deployed_stacks(self):
@@ -86,7 +100,9 @@ class Target:
       pass
 
     self._stack = {
-      s['StackName']: DeployedStack(s)
+      s['StackName']: DeployedStack(s,
+        metadata_parameter=self.metadata_parameter,
+        metadata_suffix=self.metadata_suffix)
       for s in self.cfn.describe_stacks()['Stacks'] }
 
     return self._stack
@@ -113,7 +129,7 @@ class Target:
     template = deep_merge(
       {
         'Parameters': {
-          CFN_METADATA_PARAMETER: {'Type': 'String'}
+          self.metadata_parameter: {'Type': 'String'}
         }
       },
       stack.template)
@@ -129,7 +145,11 @@ class Target:
           .format(cap, stack.name, reason))
 
     parameters = [
-      {'ParameterKey': CFN_METADATA_PARAMETER, 'ParameterValue': content_hash}]
+      {
+        'ParameterKey': self.metadata_parameter,
+        'ParameterValue': content_hash + self.metadata_suffix,
+      },
+    ]
     parameters.extend(
       {'ParameterKey': k, 'ParameterValue': v}
       for k, v in stack.parameters.items())
