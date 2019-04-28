@@ -1,3 +1,36 @@
+'''
+Simplified AWS SDK interface.
+
+The basis for this SDK is the `Session`, that can be instantiated with an AWS
+region, and profile name. Typical SDK configuration files and environment
+variables are, otherwise, respected.
+
+Given a session object `s`, the following features are provided:
+
+- AWS services are lazily exposed as attributes on the session object. The
+  returned value is a thin proxy giving access to service methods, and not a
+  boto3 client instance. For instance, `s.cloudformation` can be used to
+  interact with AWS CloudFormation.
+- The service proxy invoked as a function to select another AWS region. For
+  example, `s.cloudformation(region='eu-central-1')`.
+- API methods are lazily exposed as attributes on the service proxy, pagination
+  is transparently handled for the methods that support it. As an example,
+  CloudFormation stacks can be listed with `s.cloudformation.describe_stacks()`.
+
+Assuming nested IAM roles
+-------------------------
+
+Besides boto3's built-in support for configuring IAM roles via `~/.aws/config`,
+session objects can be used to assume IAM roles via the `assume_role` method
+which returns a new session object.
+
+For instance, to assume `RoleName` in account `123456789012` using the current
+session's credentials can be achieved with the following snippet:
+
+```
+s2 = s.assume_role(role_arn='aws:iam::123456789012:role/RoleName')
+```
+'''
 import os
 
 import boto3.session
