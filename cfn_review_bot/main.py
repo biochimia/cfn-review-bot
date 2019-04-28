@@ -19,32 +19,62 @@ def process_arguments():
 
 
 def process_single_target(sess, session_name, target_name, target_config):
+  account_id = target_config['account-id']
+  role_name = target_config['role-name']
+  region = target_config['region']
+  stacks = target_config['stack']
+
   if 'role-name' in target_config:
     sess = sess.assume_role(
-      role_arn='arn:aws:iam::{}:role/{}'.format(
-        target_config['account-id'], target_config['role-name']),
+      role_arn='arn:aws:iam::{}:role/{}'.format(account_id, role_name),
       session_name='{}+{}'.format(session_name, target_name),
       session_duration=15*60, # seconds
     )
 
-  region = target_config['region']
-  stacks = target_config['stack']
-
   tgt = cfn.Target(sess.cloudformation(region=region))
-
-  change_sets, new, updated, orphaned, unmanaged = tgt.process_stacks(
+  target_results = tgt.process_stacks(
     cfn.Stack(**stack) for stack in stacks.values())
 
-  if new:
-    print('New stacks:', new)
-  if updated:
-    print('Updated stacks:', updated)
-  if orphaned:
-    print('Orphaned stacks:', orphaned)
-  if unmanaged:
-    print('Unmanaged stacks:', len(unmanaged))
+  target_results.update({
+    'name': target_name,
+    'account-id': account_id,
+    'region': region,
+  })
 
-  print('Change sets:', change_sets)
+  return target_results
+
+
+def print_target_results(target_results):
+  print(
+    'Target: {t[name]} | {t[account-id]} | {t[region]}'
+    .format(t=target_results))
+
+  if target_results['orphaned-stack']:
+    print(
+      'Orphaned stacks: {}'
+      .format(', '.join(target_results['orphaned-stack'])))
+
+  counts = target_results['stack-count']
+  count_summary = []
+  if counts['new']:
+    count_summary.append('{} new'.format(counts['new']))
+  if counts['updated']:
+    count_summary.append('{} updated'.format(counts['updated']))
+  if counts['orphaned']:
+    count_summary.append('{} orphaned'.format(counts['orphaned']))
+
+  if not count_summary:
+    count_summary = ['unchanged']
+
+  print(
+    'Stacks: {summary} (total: {c[total]}, unmanaged: {c[unmanaged]})'
+    .format(summary=' | '.join(count_summary), c=counts))
+
+  print('Change sets:')
+  for csid in target_results['change-set-id']:
+    print('- {}'.format(csid))
+
+  print()
 
 
 def _main():
@@ -56,12 +86,14 @@ def _main():
   session_name = params.session_name or str(uuid.uuid4())
 
   for target_name, targets in full_model['target'].items():
-    print('***  {}  ***'.format(target_name))
     for target in targets:
       stacks = target['stack']
       if not stacks:
         continue
-      process_single_target(session, session_name, target_name, target)
+
+      target_results = process_single_target(
+        session, session_name, target_name, target)
+      print_target_results(target_results)
 
 
 def main():

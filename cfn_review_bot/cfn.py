@@ -105,7 +105,7 @@ class Target:
 
       deployed.is_outdated = (content_hash != deployed.content_hash)
       if not deployed.is_outdated:
-        return None, None, None
+        return None, None
 
       change_set_type = 'UPDATE'
     else:
@@ -147,39 +147,43 @@ class Target:
       Tags=tags,
     )
 
-    return change_set_type, change_set['StackId'], change_set['Id']
+    return change_set_type, change_set['Id']
 
   def process_stacks(self, managed_stacks):
-    new_stacks = []
-    updated_stacks = []
+    new_stack_count = 0
+    updated_stack_count = 0
+    unmanaged_stack_count = 0
+
+    change_set_ids = []
     orphaned_stacks = []
 
-    unchanged_stacks = []
-    unmanaged_stacks = []
-
-    stack_actions = {
-      None: unchanged_stacks,
-      'CREATE': new_stacks,
-      'UPDATE': updated_stacks,
-    }
-
-    change_sets = []
     for s in managed_stacks:
-      change_set_type, stack_id, change_set_id = self._process_stack(s)
+      change_set_type, change_set_id = self._process_stack(s)
 
-      stack_actions[change_set_type].append(s.name)
-      if change_set_type:
-        change_sets.append((stack_id, change_set_id))
+      if change_set_type is None:
+        continue
+
+      if change_set_type == 'CREATE':
+        new_stack_count += 1
+      elif change_set_type == 'UPDATE':
+        updated_stack_count += 1
+
+      change_set_ids.append(change_set_id)
 
     for n, s in self.deployed_stacks.items():
       if not s.content_hash:
-        unmanaged_stacks.append(n)
+        unmanaged_stack_count += 1
       elif not hasattr(s, 'is_outdated'):
         orphaned_stacks.append(n)
 
-    return (
-      change_sets or None,
-      new_stacks or None,
-      updated_stacks or None,
-      orphaned_stacks or None,
-      unmanaged_stacks or None)
+    return {
+      'change-set-id': change_set_ids,
+      'orphaned-stack': orphaned_stacks,
+      'stack-count': {
+        'total': len(self.deployed_stacks) + new_stack_count,
+        'new': new_stack_count,
+        'updated': updated_stack_count,
+        'orphaned': len(orphaned_stacks),
+        'unmanaged': unmanaged_stack_count,
+      },
+    }
