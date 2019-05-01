@@ -11,7 +11,7 @@ from . import loader
 from . import model
 
 
-VALID_SESSION_NAME = re.compile(r'[\w+=,.@-]*')
+VALID_SESSION_NAME = re.compile(r'[\w+=,.@-]+')
 
 
 def process_arguments():
