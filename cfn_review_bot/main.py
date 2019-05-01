@@ -62,8 +62,7 @@ def process_single_target(
     )
 
   tgt = cfn.Target(sess.cloudformation(region=region), project=project)
-  target_results = tgt.process_stacks(
-    (cfn.Stack(**stack) for stack in stacks.values()), dry_run=dry_run)
+  target_results = tgt.process_stacks(stacks.values(), dry_run=dry_run)
 
   target_results.update({
     'name': target_name,

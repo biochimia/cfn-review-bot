@@ -23,22 +23,33 @@ def _cfn_fn_handler(data):
 
 class Stack:
   def __init__(
-    self, name, template, capabilities=None, parameters=None, tags=None):
+    self,
+    *,
+    name,
+    template,
+    capabilities=None,
+    parameters=None,
+    tags=None,
+    project=None):
 
     self.name = name
     self.template = template
     self.capabilities = capabilities or []
     self.parameters = parameters or {}
     self.tags = tags or {}
+    self.project = project or None
 
   @property
   def canonical_content(self):
+    content = {
+      'template': self.template,
+      'parameters': self.parameters,
+      'tags': self.tags,
+    }
+    if self.project:
+      content['project'] = self.project
     return json.dumps(
-      {
-        'template': self.template,
-        'parameters': self.parameters,
-        'tags': self.tags,
-      },
+      content,
       allow_nan=False,
       check_circular=True,
       default=_cfn_fn_handler,
@@ -84,13 +95,14 @@ class DeployedStack(dict):
 
 class Target:
   metadata_parameter = CFN_METADATA_PARAMETER
-  metadata_suffix = ''
 
   def __init__(self, cfn, *, project):
     self.cfn = cfn
+    self.project = project
 
-    if project:
-      self.metadata_suffix = '@{}'.format(project)
+  @property
+  def metadata_suffix(self):
+    return '@{}'.format(self.project) if self.project else ''
 
   @property
   def deployed_stacks(self):
@@ -107,7 +119,8 @@ class Target:
 
     return self._stack
 
-  def process_single_stack(self, stack, *, dry_run=False):
+  def process_single_stack(self, s, *, dry_run=False):
+    stack = Stack(**s, project=self.project)
     content_hash = stack.content_hash
 
     deployed = self.deployed_stacks.get(stack.name)
