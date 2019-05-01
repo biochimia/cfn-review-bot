@@ -1,7 +1,8 @@
 import argparse
+import base64
+import os
 import re
 import textwrap
-import uuid
 
 from . import __version_info__
 from . import aws
@@ -21,7 +22,7 @@ def process_arguments():
   parser.add_argument('--region', help='Name of default AWS region')
   parser.add_argument(
     '--session-prefix', help='''Prefix for the session name to use when assuming
-    IAM roles. If not specified, this defaults to a random UUID. This prefix
+    IAM roles. If not specified, this defaults to a random string. This prefix
     will be combined with the name of the different deployment targets to
     produce the session name.''')
   parser.add_argument(
@@ -38,6 +39,9 @@ def process_arguments():
 
   return parser.parse_args()
 
+
+def _default_session_prefix():
+  return base64.b64encode(os.urandom(9), b'.-').decode('ascii')
 
 def _session_name(session_prefix, target_name, project):
   result = '{}+{}'.format(session_prefix, target_name, project)
@@ -114,7 +118,7 @@ def _main():
   params = process_arguments()
 
   session = aws.Session(profile=params.profile, region=params.region)
-  session_prefix = params.session_prefix or str(uuid.uuid4())
+  session_prefix = params.session_prefix or _default_session_prefix()
 
   print(textwrap.dedent(
     '''
