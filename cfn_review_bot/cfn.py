@@ -86,6 +86,10 @@ class DeployedStack(dict):
     }
 
   @property
+  def is_unmanaged(self):
+    return not self.parameters.get(self.metadata_parameter)
+
+  @property
   def content_hash(self):
     metadata = self.parameters.get(self.metadata_parameter)
     if (metadata is not None
@@ -219,7 +223,7 @@ class Target:
 
       if s.content_hash:
         orphaned_stacks.append(n)
-      else:
+      elif s.is_unmanaged:
         unmanaged_stack_count += 1
 
     return {
