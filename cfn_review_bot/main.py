@@ -34,6 +34,9 @@ def process_arguments():
     setups. Namely, it stacks managed in other projects from being marked
     orphaned.''')
   parser.add_argument(
+    '--target', help='''A comma-separated list of targets to process. If not
+    specified, all targets defined in the config file are processed.''')
+  parser.add_argument(
     '--dry-run', '-n', action='store_true', help='''Evaluate targets, and
     validate stacks, but skip creation of change-sets''')
 
@@ -147,8 +150,13 @@ def _main():
       vi=__version_info__))
 
   full_model = model.load(params.config_file)
+  if params.target is None:
+    all_targets = full_model['target'].items()
+  else:
+    target_names = (tn.strip() for tn in params.target.split(','))
+    all_targets = ((tn, full_model['target'].get(tn, [])) for tn in target_names)
 
-  for target_name, targets in full_model['target'].items():
+  for target_name, targets in all_targets:
     for target_config in targets:
       for region, stacks in target_config['stack'].items():
         if not stacks:
