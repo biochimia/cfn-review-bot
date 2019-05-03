@@ -32,4 +32,4 @@ TargetConfigSchema = schema.Schema({
   },
   schema.Optional('stack-root', default='./stack'): str,
   schema.Optional('template-root', default='./template'): str,
-})
+}, name='Target Configuration')

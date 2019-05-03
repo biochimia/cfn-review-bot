@@ -18,4 +18,4 @@ StackSchema = schema.Schema({
   schema.Optional('capability', default=[]): util.OneOrMany(str),
   schema.Optional('parameter', default={}): {str: str},
   schema.Optional('tag', default={}): {str: str},
-})
+}, name='Stack Description')
