@@ -106,10 +106,15 @@ def print_target_results(target_results):
     'Stacks: {summary} (total: {c[total]}, unmanaged: {c[unmanaged]})'
     .format(summary=' | '.join(count_summary), c=counts))
 
-  if target_results['change-set-id']:
-    print('Change sets:')
-    for csid in target_results['change-set-id']:
-      print('- {}'.format(csid))
+  if target_results['change-set']:
+    print('New/Updated stacks:')
+    for stack_id, change_set_id in target_results['change-set'].items():
+      print(textwrap.dedent('''
+        - {}
+          {}
+        ''')
+        .strip()
+        .format(stack_id, change_set_id or '(change set was not created)'))
 
   print()
 

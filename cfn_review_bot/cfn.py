@@ -121,6 +121,7 @@ class Target:
 
   def process_single_stack(self, s, *, dry_run=False):
     stack = Stack(**s, project=self.project)
+    stack_id = stack.name
     content_hash = stack.content_hash
 
     deployed = self.deployed_stacks.get(stack.name)
@@ -133,8 +134,9 @@ class Target:
 
       deployed.is_outdated = (content_hash != deployed.content_hash)
       if not deployed.is_outdated:
-        return None, None
+        return None, None, None
 
+      stack_id = deployed['StackId']
       change_set_type = 'UPDATE'
     else:
       change_set_type = 'CREATE'
@@ -171,7 +173,7 @@ class Target:
 
     change_set_id = None
     if not dry_run:
-      change_set_id = self.cfn.create_change_set(
+      change_set = self.cfn.create_change_set(
         StackName=stack.name,
         TemplateBody=template_body,
         Capabilities=stack.capabilities,
@@ -179,9 +181,12 @@ class Target:
         ChangeSetName=content_hash,
         Parameters=parameters,
         Tags=tags,
-      )['Id']
+      )
 
-    return change_set_type, change_set_id
+      change_set_id = change_set['Id']
+      stack_id = change_set['StackId']
+
+    return change_set_type, stack_id, change_set_id
 
   def process_stacks(self, managed_stacks, *, dry_run=False):
     new_stack_count = 0
@@ -189,11 +194,11 @@ class Target:
     adopted_stack_count = 0
     unmanaged_stack_count = 0
 
-    change_set_ids = []
+    change_sets = {}
     orphaned_stacks = []
 
     for s in managed_stacks:
-      change_set_type, change_set_id = self.process_single_stack(s, dry_run=dry_run)
+      change_set_type, stack_id, change_set_id = self.process_single_stack(s, dry_run=dry_run)
 
       if change_set_type is None:
         continue
@@ -203,8 +208,7 @@ class Target:
       elif change_set_type == 'UPDATE':
         updated_stack_count += 1
 
-      if change_set_id is not None:
-        change_set_ids.append(change_set_id)
+      change_sets[stack_id] = change_set_id
 
     for n, s in self.deployed_stacks.items():
       if hasattr(s, 'is_outdated'):
@@ -219,7 +223,7 @@ class Target:
         unmanaged_stack_count += 1
 
     return {
-      'change-set-id': change_set_ids,
+      'change-set': change_sets,
       'orphaned-stack': orphaned_stacks,
       'stack-count': {
         'total': len(self.deployed_stacks) + new_stack_count,
