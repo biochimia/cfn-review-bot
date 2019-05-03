@@ -20,19 +20,17 @@ def process_target_config(target_config):
     all_targets_expanded[name] = targets_expanded
 
     for target in targets:
-      target_region = target.get('region', default_region)
-      for region in target_region:
-        tags = {}
-        tags.update(global_tags)
-        tags.update(target['tag'])
+      target_tags = {}
+      target_tags.update(global_tags)
+      target_tags.update(target['tag'])
 
-        targets_expanded.append({
-          'account-id': target['account-id'],
-          'role-name': target.get('role-name', default_role_name),
-          'region': region,
-          'tag': tags,
-          'stack': {},
-        })
+      targets_expanded.append({
+        'account-id': target['account-id'],
+        'role-name': target['role-name'],
+        'default-region': target.get('region', default_region),
+        'tag': target_tags,
+        'stack': {},
+      })
 
   target_config['target'] = all_targets_expanded
 
@@ -73,12 +71,14 @@ def load(config_file):
         aggregated_tags.update(target['tag'])
         aggregated_tags.update(stack['tag'])
 
-        target['stack'][stack_name] = {
-          'name': stack_name,
-          'template': template,
-          'capabilities': capabilities,
-          'parameters': parameters,
-          'tags': aggregated_tags,
-        }
+        regions = stack.get('region') or target.get('default-region') or [None]
+        for region in regions:
+          target['stack'].setdefault(region, {})[stack_name] = {
+            'name': stack_name,
+            'template': template,
+            'capabilities': capabilities,
+            'parameters': parameters,
+            'tags': aggregated_tags,
+          }
 
   return targets

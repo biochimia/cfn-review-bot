@@ -51,14 +51,18 @@ def _session_name(session_prefix, target_name, project):
 
 
 def process_single_target(
-  sess, session_prefix, target_name, target_config, *, project, dry_run=False):
+  sess,
+  session_prefix,
+  target_name,
+  *,
+  account_id,
+  stacks,
+  project,
+  region=None,
+  role_name=None,
+  dry_run=False):
 
-  account_id = target_config['account-id']
-  role_name = target_config['role-name']
-  region = target_config['region']
-  stacks = target_config['stack']
-
-  if 'role-name' in target_config:
+  if role_name:
     sess = sess.assume_role(
       role_arn='arn:aws:iam::{}:role/{}'.format(account_id, role_name),
       session_name=_session_name(session_prefix, target_name, project),
@@ -145,20 +149,23 @@ def _main():
   full_model = model.load(params.config_file)
 
   for target_name, targets in full_model['target'].items():
-    for target in targets:
-      stacks = target['stack']
-      if not stacks:
-        continue
+    for target_config in targets:
+      for region, stacks in target_config['stack'].items():
+        if not stacks:
+          continue
 
-      target_results = process_single_target(
-        session,
-        session_prefix,
-        target_name,
-        target,
-        project=params.project,
-        dry_run=params.dry_run)
+        target_results = process_single_target(
+          session,
+          session_prefix,
+          target_name,
+          account_id=target_config['account-id'],
+          role_name=target_config.get('role-name'),
+          region=region,
+          stacks=stacks,
+          project=params.project,
+          dry_run=params.dry_run)
 
-      print_target_results(target_results)
+        print_target_results(target_results)
 
 
 def main():
