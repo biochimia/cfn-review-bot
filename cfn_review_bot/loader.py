@@ -11,6 +11,8 @@ import json
 import os.path
 import yaml
 
+from schema import SchemaError
+
 from .error import Error
 
 
@@ -133,7 +135,11 @@ def load_file(filename, *, schema=None):
     data = load(stream)
 
   if schema is not None:
-    data = schema.validate(data)
+    try:
+      data = schema.validate(data)
+    except SchemaError as se:
+      raise LoaderError(
+        f'File "{filename}" fails validation, {se.code}') from None
 
   try:
     cls = ATTRIBUTABLE_TYPE[type(data)]
