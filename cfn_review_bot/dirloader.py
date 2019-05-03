@@ -40,7 +40,7 @@ def _key_from_path(root, path):
     os.path.relpath(path, start=root))[0])
 
 
-def filter_directories(dirnames):
+def _filter_directories(dirnames):
   '''
   Use with `os.walk()`'s `dirnames` return value to filter out hidden and
   directories in `DIRECTORY_BLACKLIST`.
@@ -58,7 +58,7 @@ def load_directory(root, *, drop_suffix=None, schema=None):
   seen = set()
 
   for path, dirnames, filenames in os.walk(root):
-    dirnames[:] = filter_directories(dirnames)
+    dirnames[:] = _filter_directories(dirnames)
 
     for fn in filenames:
       if fn.startswith('.'):
