@@ -7,7 +7,6 @@ YAML. This is useful to allow use of CloudFormation shorthand function notation
 in templates.
 '''
 
-import io
 import json
 import os.path
 import yaml
@@ -131,9 +130,8 @@ def load_file(filename, *, schema=None):
 
   filename = os.path.abspath(filename)
   with open(filename) as stream:
-    raw_data = stream.read()
+    data = load(stream)
 
-  data = load(io.StringIO(raw_data))
   if schema is not None:
     data = schema.validate(data)
 
@@ -144,6 +142,5 @@ def load_file(filename, *, schema=None):
 
   tagged_data = cls(data)
   tagged_data.__file__ = filename
-  tagged_data.__raw__ = raw_data
 
   return tagged_data
