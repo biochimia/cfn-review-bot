@@ -7,7 +7,7 @@ import schema
 from . import util
 
 
-TemplateSchema = schema.Schema({
+CfnTemplateSchema = schema.Schema({
   schema.Optional('AWSTemplateFormatVersion'): str,
   schema.Optional('Description'): str,
   schema.Optional('Metadata'): util.Any,

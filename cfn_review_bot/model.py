@@ -4,7 +4,7 @@ from .dirloader import load_directory, normalize_key
 from .loader import load_file
 from .merge import deep_merge
 from .schema.target import TargetConfigSchema
-from .schema.template import TemplateSchema
+from .schema.template import CfnTemplateSchema
 from .schema.stack import StackSchema
 
 
@@ -51,7 +51,7 @@ def load(config_file):
   targets = process_target_config(targets)
 
   templates = dict(
-    load_directory(targets['template-root'], schema=TemplateSchema))
+    load_directory(targets['template-root'], schema=CfnTemplateSchema))
   stacks = dict(load_directory(
     targets['stack-root'], schema=StackSchema, drop_suffix='stack'))
 
