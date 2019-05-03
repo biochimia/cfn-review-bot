@@ -41,7 +41,6 @@ import botocore.exceptions
 
 # Credentials cache is shared with awscli
 AWSCLI_CACHE_DIR = os.path.expanduser('~/.aws/cli/cache')
-DEFAULT_SESSION = None
 
 
 class _AssumeRoleProvider:
@@ -119,7 +118,6 @@ class Session:
 
   def __getattr__(self, service_name):
     return Service(self, service_name)
-    return Service(self.get_service(service_name))
 
 
 class Service:
