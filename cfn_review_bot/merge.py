@@ -19,4 +19,7 @@ def deep_merge(old, new):
       and isinstance(new, dict)):
     return _deep_merge_mapping(old, new)
 
+  if old == new:
+    return old
+
   raise Exception('Unable to merge {} with {}'.format(old, new))
