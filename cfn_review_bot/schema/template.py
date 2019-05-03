@@ -1,3 +1,7 @@
+'''
+Minimal schema validation for CloudFormation templates.
+'''
+
 import schema
 
 from . import util

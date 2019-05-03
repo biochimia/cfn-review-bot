@@ -1,3 +1,11 @@
+'''
+Schema for deployment target configuration.
+
+
+A deployment target is typically an account/region combination. Multiple targets
+may be referenced by a single name.
+'''
+
 import schema
 
 from . import aws

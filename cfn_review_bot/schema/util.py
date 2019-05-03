@@ -1,3 +1,7 @@
+'''
+Utilities used in schema definitions.
+'''
+
 from schema import And, Or, Use
 
 

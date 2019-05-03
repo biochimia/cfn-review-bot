@@ -1,3 +1,7 @@
+'''
+Schema for configuring a CloudFormation stack and its deployment targets.
+'''
+
 import schema
 
 from . import util

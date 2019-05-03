@@ -1,3 +1,12 @@
+'''
+Utility functions to load/dump JSON and YAML files.
+
+In particular, the YAML loader is able to load files with arbitrarily !tagged
+values. The tags are left unprocessed on loading, but can be dumped back to
+YAML. This is useful to allow use of CloudFormation shorthand function notation
+in templates.
+'''
+
 import io
 import json
 import os.path

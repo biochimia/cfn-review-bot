@@ -41,6 +41,10 @@ def _key_from_path(root, path):
 
 
 def filter_directories(dirnames):
+  '''
+  Use with `os.walk()`'s `dirnames` return value to filter out hidden and
+  directories in `DIRECTORY_BLACKLIST`.
+  '''
   for d in dirnames:
     if d.startswith('.'):
       continue

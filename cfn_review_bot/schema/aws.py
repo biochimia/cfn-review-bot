@@ -1,3 +1,7 @@
+'''
+AWS-specific types for use in schema definitions.
+'''
+
 import schema
 
 
