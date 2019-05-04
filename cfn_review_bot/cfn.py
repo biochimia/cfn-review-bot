@@ -129,7 +129,9 @@ class Target:
     content_hash = stack.content_hash
 
     deployed = self.deployed_stacks.get(stack.name)
-    if deployed:
+    if (deployed
+        and deployed.status != 'REVIEW_IN_PROGRESS'):
+
       if deployed.status == 'ROLLBACK_COMPLETE':
         raise ValidationError(
           'Stack {} with ROLLBACK_COMPLETE status needs to be deleted before '
