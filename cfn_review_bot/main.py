@@ -4,6 +4,8 @@ import os
 import re
 import textwrap
 
+from dataclasses import dataclass
+
 from . import __version_info__
 from . import aws
 from . import cfn
@@ -46,11 +48,38 @@ def process_arguments():
 def _default_session_prefix():
   return base64.b64encode(os.urandom(9), b'.-').decode('ascii')
 
+
 def _session_name(session_prefix, target_name, project):
   result = '{}+{}'.format(session_prefix, target_name, project)
   if project:
     result += '@{}'.format(project)
   return '-'.join(VALID_SESSION_NAME.findall(result))
+
+
+@dataclass
+class TargetResults:
+  name: str
+  account: str
+  region: str
+  results: cfn.ProcessStacksResult
+
+  def __str__(self):
+    lines = [f'Target: {self.name} | {self.account} | {self.region}']
+
+    if self.results.orphaned_stacks:
+      lines += [f'Orphaned stacks: {", ".join(self.results.orphaned_stacks)}']
+
+    lines += [f'Stack summary: {self.results.stack_summary}']
+
+    if self.results.change_sets:
+      for change_set in self.results.change_sets:
+        lines += [f'- {change_set.stack}']
+        if change_set.type == cfn.ChangeSetType.CREATE:
+          lines[-1] += ' (NEW)'
+        lines += [f'  {change_set.id}']
+
+    lines += ['']
+    return '\n'.join(lines)
 
 
 def process_single_target(
@@ -75,55 +104,7 @@ def process_single_target(
   tgt = cfn.Target(sess.cloudformation(region=region), project=project)
   target_results = tgt.process_stacks(stacks.values(), dry_run=dry_run)
 
-  target_results.update({
-    'name': target_name,
-    'account-id': account_id,
-    'region': region,
-  })
-
-  return target_results
-
-
-def print_target_results(target_results):
-  print(
-    'Target: {t[name]} | {t[account-id]} | {t[region]}'
-    .format(t=target_results))
-
-  if target_results['orphaned-stack']:
-    print(
-      'Orphaned stacks: {}'
-      .format(', '.join(target_results['orphaned-stack'])))
-
-  counts = target_results['stack-count']
-  count_summary = []
-  if counts['new']:
-    count_summary.append('{} new'.format(counts['new']))
-  if counts['updated']:
-    updated_summary = '{} updated'.format(counts['updated'])
-    if counts['adopted']:
-      updated_summary += ' ({} adopted)'.format(counts['adopted'])
-    count_summary.append(updated_summary)
-  if counts['orphaned']:
-    count_summary.append('{} orphaned'.format(counts['orphaned']))
-
-  if not count_summary:
-    count_summary = ['unchanged']
-
-  print(
-    'Stacks: {summary} (total: {c[total]}, unmanaged: {c[unmanaged]})'
-    .format(summary=' | '.join(count_summary), c=counts))
-
-  if target_results['change-set']:
-    print('New/Updated stacks:')
-    for change_set in target_results['change-set']:
-      print(textwrap.dedent('''
-        - {}
-          {}
-        ''')
-        .strip()
-        .format(change_set.stack, change_set.id))
-
-  print()
+  return TargetResults(target_name, account_id, region, target_results)
 
 
 def _main():
@@ -173,7 +154,7 @@ def _main():
           project=params.project,
           dry_run=params.dry_run)
 
-        print_target_results(target_results)
+        print(target_results)
 
 
 def main():

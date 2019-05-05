@@ -1,8 +1,9 @@
 import hashlib
 import json
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import List
 
 from . import error
 from . import loader
@@ -112,6 +113,40 @@ class ChangeSet:
   id: str
 
 
+@dataclass
+class StackStats:
+  total: int = 0
+  new: int = 0
+  updated: int = 0
+  adopted: int = 0
+  orphaned: int = 0
+  unmanaged: int = 0
+
+  def __str__(self):
+    parts = []
+
+    if self.new:
+      parts += [f'{self.new} new']
+    if self.updated:
+      parts += [f'{self.updated} updated']
+      if self.adopted:
+        parts[-1] += f' ({self.adopted} adopted)'
+    if self.orphaned:
+      parts += [f'{self.orphaned} orphaned']
+
+    if not parts:
+      parts = ['unchanged']
+
+    return f'{" | ".join(parts)} (total: {self.total}, unmanaged: {self.unmanaged})'
+
+
+@dataclass
+class ProcessStacksResult:
+  stack_summary: StackStats = field(default_factory=StackStats)
+  change_sets: List[ChangeSet] = field(default_factory=list)
+  orphaned_stacks: List[DeployedStack] = field(default_factory=list)
+
+
 class Target:
   metadata_parameter = CFN_METADATA_PARAMETER
 
@@ -210,13 +245,7 @@ class Target:
     return ChangeSet(change_set_type, stack_id, change_set_id)
 
   def process_stacks(self, managed_stacks, *, dry_run=False):
-    new_stack_count = 0
-    updated_stack_count = 0
-    adopted_stack_count = 0
-    unmanaged_stack_count = 0
-
-    change_sets = []
-    orphaned_stacks = []
+    result = ProcessStacksResult()
 
     for s in managed_stacks:
       change_set = self.process_single_stack(s, dry_run=dry_run)
@@ -224,33 +253,26 @@ class Target:
         continue
 
       if change_set.type == ChangeSetType.CREATE:
-        new_stack_count += 1
+        result.stack_summary.total += 1
+        result.stack_summary.new += 1
       elif change_set.type == ChangeSetType.UPDATE:
-        updated_stack_count += 1
+        result.stack_summary.updated += 1
 
-      change_sets.append(change_set)
+      result.change_sets.append(change_set)
 
     for n, s in self.deployed_stacks.items():
+      result.stack_summary.total += 1
+
       if hasattr(s, 'is_outdated'):
         # Managed (or now adopted) stack
         if not s.content_hash:
-          adopted_stack_count += 1
+          result.stack_summary.adopted += 1
         continue
 
       if s.content_hash:
-        orphaned_stacks.append(n)
+        result.stack_summary.orphaned += 1
+        result.orphaned_stacks.append(n)
       elif s.is_unmanaged:
-        unmanaged_stack_count += 1
+        result.stack_summary.unmanaged += 1
 
-    return {
-      'change-set': change_sets,
-      'orphaned-stack': orphaned_stacks,
-      'stack-count': {
-        'total': len(self.deployed_stacks) + new_stack_count,
-        'new': new_stack_count,
-        'updated': updated_stack_count,
-        'adopted': adopted_stack_count,
-        'orphaned': len(orphaned_stacks),
-        'unmanaged': unmanaged_stack_count,
-      },
-    }
+    return result
