@@ -1,6 +1,9 @@
 import hashlib
 import json
 
+from dataclasses import dataclass
+from enum import Enum
+
 from . import error
 from . import loader
 
@@ -97,6 +100,18 @@ class DeployedStack(dict):
       return metadata[:-len(self.metadata_suffix)]
 
 
+class ChangeSetType(Enum):
+  CREATE = 'CREATE'
+  UPDATE = 'UPDATE'
+
+
+@dataclass
+class ChangeSet:
+  type: ChangeSetType
+  stack: str
+  id: str
+
+
 class Target:
   metadata_parameter = CFN_METADATA_PARAMETER
 
@@ -140,12 +155,12 @@ class Target:
 
       deployed.is_outdated = (content_hash != deployed.content_hash)
       if not deployed.is_outdated:
-        return None, None, None
+        return None
 
       stack_id = deployed['StackId']
-      change_set_type = 'UPDATE'
+      change_set_type = ChangeSetType.UPDATE
     else:
-      change_set_type = 'CREATE'
+      change_set_type = ChangeSetType.CREATE
 
     template = deep_merge(
       {
@@ -177,13 +192,13 @@ class Target:
 
     tags = [{'Key': k, 'Value': v} for k, v in stack.tags.items()]
 
-    change_set_id = None
+    change_set_id = '(change set was not created)'
     if not dry_run:
       change_set = self.cfn.create_change_set(
         StackName=stack.name,
         TemplateBody=template_body,
         Capabilities=stack.capabilities,
-        ChangeSetType=change_set_type,
+        ChangeSetType=change_set_type.value,
         ChangeSetName=content_hash,
         Parameters=parameters,
         Tags=tags,
@@ -192,7 +207,7 @@ class Target:
       change_set_id = change_set['Id']
       stack_id = change_set['StackId']
 
-    return change_set_type, stack_id, change_set_id
+    return ChangeSet(change_set_type, stack_id, change_set_id)
 
   def process_stacks(self, managed_stacks, *, dry_run=False):
     new_stack_count = 0
@@ -200,21 +215,20 @@ class Target:
     adopted_stack_count = 0
     unmanaged_stack_count = 0
 
-    change_sets = {}
+    change_sets = []
     orphaned_stacks = []
 
     for s in managed_stacks:
-      change_set_type, stack_id, change_set_id = self.process_single_stack(s, dry_run=dry_run)
-
-      if change_set_type is None:
+      change_set = self.process_single_stack(s, dry_run=dry_run)
+      if change_set is None:
         continue
 
-      if change_set_type == 'CREATE':
+      if change_set.type == ChangeSetType.CREATE:
         new_stack_count += 1
-      elif change_set_type == 'UPDATE':
+      elif change_set.type == ChangeSetType.UPDATE:
         updated_stack_count += 1
 
-      change_sets[stack_id] = change_set_id
+      change_sets.append(change_set)
 
     for n, s in self.deployed_stacks.items():
       if hasattr(s, 'is_outdated'):

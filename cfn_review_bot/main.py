@@ -115,13 +115,13 @@ def print_target_results(target_results):
 
   if target_results['change-set']:
     print('New/Updated stacks:')
-    for stack_id, change_set_id in target_results['change-set'].items():
+    for change_set in target_results['change-set']:
       print(textwrap.dedent('''
         - {}
           {}
         ''')
         .strip()
-        .format(stack_id, change_set_id or '(change set was not created)'))
+        .format(change_set.stack, change_set.id))
 
   print()
 
