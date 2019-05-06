@@ -75,11 +75,9 @@ class TargetResults:
 
   def __str__(self):
     lines = [f'Target: {self.name} | {self.account} | {self.region}']
-
+    lines += [f'Stacks: {self.results.stack_summary}']
     if self.results.orphaned_stacks:
       lines += [f'Orphaned stacks: {", ".join(self.results.orphaned_stacks)}']
-
-    lines += [f'Stack summary: {self.results.stack_summary}']
 
     if self.results.change_sets:
       for change_set in self.results.change_sets:
