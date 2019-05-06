@@ -36,7 +36,10 @@ setuptools.setup(
   ],
   packages=setuptools.find_packages(),
   package_data={
-    'cfn_review_bot': [cfn_review_bot._version.PACKAGE_VERSION_FILE],
+    'cfn_review_bot': [
+      cfn_review_bot._version.PACKAGE_VERSION_FILE,
+      'templates/*.md',
+    ],
   },
   data_files=[('requirements', ['requirements.txt'])],
   install_requires=list(get_requirements()),

@@ -40,6 +40,10 @@ def process_arguments():
     '--target', help='''A comma-separated list of targets to process. If not
     specified, all targets defined in the config file are processed.''')
   parser.add_argument(
+    '--markdown-summary', action='store_true', help='''Print a
+    markdown-formatted summary of modified stacks and created change sets to
+    standard output.''')
+  parser.add_argument(
     '--dry-run', '-n', action='store_true', help='''Evaluate targets, and
     validate stacks, but skip creation of change-sets''')
 
@@ -172,6 +176,10 @@ def _main():
 
   for target_results in results:
     target_results.wait_for_ready()
+
+  if params.markdown_summary:
+    from . import markdown
+    print(markdown.summary(results), end='', flush=True)
 
 
 def main():
