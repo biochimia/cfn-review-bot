@@ -71,8 +71,7 @@ class TargetResults:
 
   def wait_for_ready(self):
     for change_set in self.results.change_sets:
-      if change_set is not None:
-        self.target.wait_for_ready(change_set)
+      self.target.wait_for_ready(change_set)
 
   def __str__(self):
     lines = [f'Target: {self.name} | {self.account} | {self.region}']
@@ -174,8 +173,9 @@ def _main():
         results.append(target_results)
         print(target_results, file=sys.stderr)
 
-  for target_results in results:
-    target_results.wait_for_ready()
+  if not params.dry_run:
+    for target_results in results:
+      target_results.wait_for_ready()
 
   if params.markdown_summary:
     from . import markdown

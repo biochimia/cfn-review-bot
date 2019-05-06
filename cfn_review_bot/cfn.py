@@ -285,6 +285,9 @@ class Target:
     return result
 
   def wait_for_ready(self, change_set: ChangeSet):
+    if change_set.id is None:
+      return
+
     start = datetime.datetime.now()
     while True:
       detail = self.cfn.describe_change_set(ChangeSetName=change_set.id)
