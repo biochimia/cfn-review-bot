@@ -1,4 +1,4 @@
-{% for target in results %}
+{% for target in results if target.results.change_sets or target.results.orphaned_stacks %}
 {%  if not loop.first %}
 <br>
 
