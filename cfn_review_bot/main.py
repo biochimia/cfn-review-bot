@@ -2,6 +2,7 @@ import argparse
 import base64
 import os
 import re
+import sys
 import textwrap
 
 from dataclasses import dataclass
@@ -138,7 +139,8 @@ def _main():
       p=params,
       s=session,
       session_prefix=session_prefix,
-      vi=__version_info__))
+      vi=__version_info__),
+    file=sys.stderr)
 
   full_model = model.load(params.config_file)
   if params.target is None:
@@ -166,7 +168,7 @@ def _main():
           dry_run=params.dry_run)
 
         results.append(target_results)
-        print(target_results)
+        print(target_results, file=sys.stderr)
 
   for target_results in results:
     target_results.wait_for_ready()
