@@ -58,10 +58,16 @@ def _session_name(session_prefix, target_name, project):
 
 @dataclass
 class TargetResults:
+  target: cfn.Target
   name: str
   account: str
   region: str
   results: cfn.ProcessStacksResult
+
+  def wait_for_ready(self):
+    for change_set in self.results.change_sets:
+      if change_set is not None:
+        self.target.wait_for_ready(change_set)
 
   def __str__(self):
     lines = [f'Target: {self.name} | {self.account} | {self.region}']
@@ -76,7 +82,11 @@ class TargetResults:
         lines += [f'- {change_set.stack}']
         if change_set.type == cfn.ChangeSetType.CREATE:
           lines[-1] += ' (NEW)'
-        lines += [f'  {change_set.id}']
+
+        if change_set.id is None:
+          lines += ['  (change set was not created)']
+        else:
+          lines += [f'  {change_set.id}']
 
     lines += ['']
     return '\n'.join(lines)
@@ -104,7 +114,7 @@ def process_single_target(
   tgt = cfn.Target(sess.cloudformation(region=region), project=project)
   target_results = tgt.process_stacks(stacks.values(), dry_run=dry_run)
 
-  return TargetResults(target_name, account_id, region, target_results)
+  return TargetResults(tgt, target_name, account_id, region, target_results)
 
 
 def _main():
@@ -137,6 +147,7 @@ def _main():
     target_names = (tn.strip() for tn in params.target.split(','))
     all_targets = ((tn, full_model['target'].get(tn, [])) for tn in target_names)
 
+  results = []
   for target_name, targets in all_targets:
     for target_config in targets:
       for region, stacks in target_config['stack'].items():
@@ -154,7 +165,11 @@ def _main():
           project=params.project,
           dry_run=params.dry_run)
 
+        results.append(target_results)
         print(target_results)
+
+  for target_results in results:
+    target_results.wait_for_ready()
 
 
 def main():

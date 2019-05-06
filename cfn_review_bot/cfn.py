@@ -1,9 +1,11 @@
+import datetime
 import hashlib
 import json
+import time
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List
+from typing import Any, List, Mapping, Optional
 
 from . import error
 from . import loader
@@ -15,6 +17,10 @@ CFN_METADATA_PARAMETER = 'ReviewBotMetadata'
 
 
 class ValidationError(error.Error):
+  pass
+
+
+class TimeoutError(error.Error):
   pass
 
 
@@ -111,6 +117,7 @@ class ChangeSet:
   type: ChangeSetType
   stack: str
   id: str
+  detail: Optional[Mapping[str, Any]] = None
 
 
 @dataclass
@@ -227,7 +234,7 @@ class Target:
 
     tags = [{'Key': k, 'Value': v} for k, v in stack.tags.items()]
 
-    change_set_id = '(change set was not created)'
+    change_set_id = None
     if not dry_run:
       change_set = self.cfn.create_change_set(
         StackName=stack.name,
@@ -276,3 +283,18 @@ class Target:
         result.stack_summary.unmanaged += 1
 
     return result
+
+  def wait_for_ready(self, change_set: ChangeSet):
+    start = datetime.datetime.now()
+    while True:
+      detail = self.cfn.describe_change_set(ChangeSetName=change_set.id)
+
+      if detail['Status'] not in ['CREATE_PENDING', 'CREATE_IN_PROGRESS']:
+        change_set.detail = detail
+        return
+
+      if (datetime.datetime.now() - start).total_seconds() > 60:
+        raise TimeoutError(
+          f'Timeout waiting for change set {change_set.id} to become ready')
+
+      time.sleep(5)
