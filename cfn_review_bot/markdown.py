@@ -22,7 +22,7 @@ ENVIRONMENT.globals.update(
     'eu-north-1': 'sweden',
     'eu-west-1': 'ireland',
     'eu-west-2': 'uk',
-#   'eu-west-3': 'fr',
+    'eu-west-3': 'fr',
     'sa-east-1': 'brazil',
     'us-east-1': 'us',
     'us-east-2': 'us',
