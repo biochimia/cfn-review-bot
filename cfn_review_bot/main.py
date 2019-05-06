@@ -154,9 +154,6 @@ def _main():
   for target_name, targets in all_targets:
     for target_config in targets:
       for region, stacks in target_config['stack'].items():
-        if not stacks:
-          continue
-
         target_results = process_single_target(
           session,
           session_prefix,
