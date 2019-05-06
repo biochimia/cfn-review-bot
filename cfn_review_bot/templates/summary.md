@@ -3,7 +3,7 @@
 <br>
 
 {%  endif %}
-### :dart: `{{ target.name }}` | `{{ target.account }}` |{{ ':{}: '|format_if(REGION_TO_EMOJI[target.region]) }}`{{ target.region }}` [[login](https://{{ target.account }}.signin.aws.amazon.com/console)]
+### :dart: `{{ target.name }}` | `{{ target.account }}` | {{ ':{}: '|format_if(REGION_TO_EMOJI[target.region]) }}`{{ target.region }}` [[login](https://{{ target.account }}.signin.aws.amazon.com/console)]
 
 **Stacks:** {{ target.results.stack_summary }}
 {%  if target.results.orphaned_stacks %}
