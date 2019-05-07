@@ -38,8 +38,8 @@
 |:-|:-|:-|:-|:-|:-|
 {%      for change in change_set.detail.Changes %}
 |`{{ change.ResourceChange.LogicalResourceId }}`|`{{ change.ResourceChange.ResourceType }}`|`{{ change.ResourceChange.Action }}`|{{ '`{}`'|format_if(change.ResourceChange.Replacement) }}|{{ '<br>'.join(change.ResourceChange.Scopes) }}|
-{%-       for detail in change.Details %}
-{{ '<br>' if not loop.first }}`{{ detail.ChangeSource }}`{{ ' (`{}`)'|format_if(detail.CausingEntity) }}{{ ' **`[{}]`**'|format_if(detail.Evaluation) }}
+{%-       for change_detail in change.ResourceChange.Details %}
+{{ '<br>' if not loop.first }}`{{ change_detail.ChangeSource }}`{{ ' (`{}`)'|format_if(change_detail.CausingEntity) }}{{ ' **`[{}]`**'|format_if(change_detail.Evaluation) }}
 {%-       endfor %}|
 {%      endfor %}
 
