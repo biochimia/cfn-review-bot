@@ -31,9 +31,9 @@
 #### Capabilities: `{{ '` | `'.join(change_set.detail.Capabilities) }}`
 
 {%    endif %}
-{%    if change_set.detail.Changes %}
-#### Changes
+#### Resource Changes
 
+{%    if change_set.detail.Changes %}
 |Resource|Resource Type|Action|Replace?|Modification Scope|Change Source|
 |:-|:-|:-|:-|:-|:-|
 {%      for change in change_set.detail.Changes %}
@@ -42,6 +42,9 @@
 {{ '<br>' if not loop.first }}`{{ detail.ChangeSource }}`{{ ' (`{}`)'|format_if(detail.CausingEntity) }}{{ ' **`[{}]`**'|format_if(detail.Evaluation) }}
 {%-       endfor %}|
 {%      endfor %}
+
+{%    else %}
+No resource changes.
 
 {%    endif %}
 {%    if change_set.detail.Tags %}
