@@ -41,7 +41,7 @@
 |Resource|Resource Type|Action|Replace?|Modification Scope|Change Source|
 |:-|:-|:-|:-|:-|:-|
 {%      for change in change_set.detail.Changes %}
-|`{{ change.ResourceChange.LogicalResourceId }}`|`{{ change.ResourceChange.ResourceType }}`|`{{ change.ResourceChange.Action }}`|{{ '`{}`'|format_if(change.ResourceChange.Replacement) }}|{{ '<br>'.join(change.ResourceChange.Scopes) }}|
+|`{{ change.ResourceChange.LogicalResourceId }}`|`{{ change.ResourceChange.ResourceType }}`|`{{ change.ResourceChange.Action }}`|{{ '`{}`'|format_if(change.ResourceChange.Replacement) }}|{{ '<br>'.join(change.ResourceChange.Scope) }}|
 {%-       for change_detail in change.ResourceChange.Details %}
 {{ '<br>' if not loop.first }}`{{ change_detail.ChangeSource }}`{{ ' (`{}`)'|format_if(change_detail.CausingEntity) }}{{ ' **`[{}]`**'|format_if(change_detail.Evaluation) }}
 {%-       endfor %}|
