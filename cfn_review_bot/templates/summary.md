@@ -11,19 +11,12 @@
 {%  endif %}
 
 {%  for change_set in target.results.change_sets %}
-{%    set change_set_base_url = 'https://{0}.console.aws.amazon.com/cloudformation/home?region={0}#/stacks'
-        .format(target.region) %}
-{%    if change_set.type == change_set.type.CREATE %}
-{%      set stack_emoji = ':sparkles:' %}
-{%      set change_set_url = '{}/changesets/changes?stackId={}&changeSetId={}'
-          .format(change_set_base_url, change_set.stack, change_set.id) %}
-{%    else %}
-{%      set stack_emoji = '' %}
-{%      set change_set_url = '{}/{}/changesets/{}'
-          .format(change_set_base_url, change_set.stack, change_set.id) %}
-{%    endif %}
+{%    set change_set_url =
+        'https://{0}.console.aws.amazon.com/cloudformation/home?region={0}#/stacks'
+        '/changesets/changes?stackId={1}&changeSetId={2}'
+        .format(target.region, change_set.stack, change_set.id) %}
 <details>
-<summary>{{ stack_emoji }}<code>{{ change_set.detail.StackName }}</code> [<a href="{{ change_set_url }}">change set</a>]</summary>
+<summary>{{ ':sparkles:' if change_set.type == change_set.type.CREATE }}<code>{{ change_set.detail.StackName }}</code> [<a href="{{ change_set_url }}">change set</a>]</summary>
 
 {%    if change_set.detail.Status != 'CREATE_COMPLETE' %}
 #### Status: `{{ change_set.detail.Status }}`{{ ' ({})'|format_if(change_set.detail.StatusReason) }}
