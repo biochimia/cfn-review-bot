@@ -19,7 +19,10 @@
 <summary>{{ ':sparkles:' if change_set.type == change_set.type.CREATE }}<code>{{ change_set.detail.StackName }}</code> [<a href="{{ change_set_url }}">change set</a>]</summary>
 
 {%    if change_set.detail.Status != 'CREATE_COMPLETE' %}
-#### Status: `{{ change_set.detail.Status }}`{{ ' ({})'|format_if(change_set.detail.StatusReason) }}
+#### Change Set Status: `{{ change_set.detail.Status }}`
+
+{{ change_set.detail.StatusReason }}
+
 {%    endif %}
 {%    if change_set.detail.Parameters|length > 1 %}
 #### Parameters
