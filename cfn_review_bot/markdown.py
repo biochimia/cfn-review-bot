@@ -75,6 +75,6 @@ ENVIRONMENT.filters.update({
 })
 
 
-def summary(results):
+def summary(targets):
   tmpl = ENVIRONMENT.get_template('summary.md')
-  return tmpl.render(results=results)
+  return tmpl.render(targets=targets)

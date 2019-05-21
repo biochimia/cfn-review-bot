@@ -4,7 +4,7 @@ Schema for configuring a CloudFormation stack and its deployment targets.
 
 import schema
 
-from . import util
+from . import aws, util
 
 
 StackSchema = schema.Schema({
@@ -13,7 +13,7 @@ StackSchema = schema.Schema({
   schema.Optional('target'): util.OneOrMany(str),
 
   # overrides regions defined in the target
-  schema.Optional('region'): util.OneOrMany(str),
+  schema.Optional('region'): util.OneOrMany(aws.Region),
 
   schema.Optional('capability', default=[]): util.OneOrMany(str),
   schema.Optional('parameter', default={}): {str: str},

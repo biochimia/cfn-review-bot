@@ -12,7 +12,9 @@ from . import aws
 from . import cfn
 from . import error
 from . import loader
-from . import model
+from . import markdown
+
+from .model import Model
 
 
 VALID_SESSION_NAME = re.compile(r'[\w+=,.@-]+')
@@ -22,7 +24,7 @@ def process_arguments():
   parser = argparse.ArgumentParser()
   parser.add_argument(
     '--profile', help='Name of AWS configuration profile in ~/.aws/config')
-  parser.add_argument('--region', help='Name of default AWS region')
+  parser.add_argument('--default-region', help='Name of default AWS region')
   parser.add_argument(
     '--session-prefix', help='''Prefix for the session name to use when assuming
     IAM roles. If not specified, this defaults to a random string. This prefix
@@ -37,8 +39,17 @@ def process_arguments():
     setups. Namely, it stacks managed in other projects from being marked
     orphaned.''')
   parser.add_argument(
-    '--target', help='''A comma-separated list of targets to process. If not
-    specified, all targets defined in the config file are processed.''')
+    '--target', action='append', help='''Add named target to list of targets to
+    process. If no target is specified, then all configured targets are
+    processed.''')
+  parser.add_argument(
+    '--region', action='append', help='''Add region to list of regions to be
+    processed. If no region is specified, then all configured regions are
+    processed.''')
+  parser.add_argument(
+    '--stack', action='append', help='''Add stack to list of stacks to be
+    processed. If no stack is specified, then all configured stacks are
+    processed.''')
   parser.add_argument(
     '--markdown-summary', action='store_true', help='''Print a
     markdown-formatted summary of modified stacks and created change sets to
@@ -61,68 +72,21 @@ def _session_name(session_prefix, target_name, project):
   return '-'.join(VALID_SESSION_NAME.findall(result))
 
 
-@dataclass
-class TargetResults:
-  target: cfn.Target
-  name: str
-  account: str
-  region: str
-  results: cfn.ProcessStacksResult
-
-  def wait_for_ready(self):
-    for change_set in self.results.change_sets:
-      self.target.wait_for_ready(change_set)
-
-  def __str__(self):
-    lines = [f'Target: {self.name} | {self.account} | {self.region}']
-    lines += [f'Stacks: {self.results.stack_summary}']
-    if self.results.orphaned_stacks:
-      lines += [f'Orphaned stacks: {", ".join(self.results.orphaned_stacks)}']
-
-    if self.results.change_sets:
-      for change_set in self.results.change_sets:
-        lines += [f'- {change_set.stack}']
-        if change_set.type == cfn.ChangeSetType.CREATE:
-          lines[-1] += ' (NEW)'
-
-        if change_set.id is None:
-          lines += ['  (change set was not created)']
-        else:
-          lines += [f'  {change_set.id}']
-
-    lines += ['']
-    return '\n'.join(lines)
-
-
-def process_single_target(
-  sess,
-  session_prefix,
-  target_name,
-  *,
-  account_id,
-  stacks,
-  project,
-  region=None,
-  role_name=None,
-  dry_run=False):
-
-  if role_name:
-    sess = sess.assume_role(
-      role_arn='arn:aws:iam::{}:role/{}'.format(account_id, role_name),
-      session_name=_session_name(session_prefix, target_name, project),
+def setup_session(target, session, session_prefix, project):
+  if target.role:
+    session = session.assume_role(
+      role_arn=f'arn:aws:iam::{target.account}:role/{target.role}',
+      session_name=_session_name(session_prefix, target.name, project),
       session_duration=15*60, # seconds
     )
-
-  tgt = cfn.Target(sess.cloudformation(region=region), project=project)
-  target_results = tgt.process_stacks(stacks.values(), dry_run=dry_run)
-
-  return TargetResults(tgt, target_name, account_id, region, target_results)
+  return cfn.Session(
+    session.cloudformation(region=target.region), project=project)
 
 
 def _main():
   params = process_arguments()
 
-  session = aws.Session(profile=params.profile, region=params.region)
+  session = aws.Session(profile=params.profile, region=params.default_region)
   session_prefix = params.session_prefix or _default_session_prefix()
 
   print(textwrap.dedent(
@@ -141,40 +105,31 @@ def _main():
       s=session,
       session_prefix=session_prefix,
       vi=__version_info__),
-    file=sys.stderr)
+    file=sys.stderr, flush=True)
 
-  full_model = model.load(params.config_file)
-  if params.target is None:
-    all_targets = full_model['target'].items()
-  else:
-    target_names = (tn.strip() for tn in params.target.split(','))
-    all_targets = ((tn, full_model['target'].get(tn, [])) for tn in target_names)
+  model = Model.from_targets_file(params.config_file)
 
-  results = []
-  for target_name, targets in all_targets:
-    for target_config in targets:
-      for region, stacks in target_config['stack'].items():
-        target_results = process_single_target(
-          session,
-          session_prefix,
-          target_name,
-          account_id=target_config['account-id'],
-          role_name=target_config.get('role-name'),
-          region=region,
-          stacks=stacks,
-          project=params.project,
-          dry_run=params.dry_run)
+  targets = list(model.single_region_targets(
+    targets=params.target, regions=params.region, stacks=params.stack))
 
-        results.append(target_results)
-        print(target_results, file=sys.stderr)
+  for target in targets:
+    print(target.header, file=sys.stderr, flush=True)
 
-  if not params.dry_run:
-    for target_results in results:
-      target_results.wait_for_ready()
+    target.cfn_session = setup_session(
+      target, session, session_prefix, params.project)
+    target.cfn_session.analyse_target(target)
+
+    if not params.dry_run:
+      target.cfn_session.prepare_change_sets(target)
+
+    print(target, file=sys.stderr, flush=True)
 
   if params.markdown_summary:
-    from . import markdown
-    print(markdown.summary(results), end='', flush=True)
+    if not params.dry_run:
+      for target in targets:
+        target.cfn_session.wait_for_ready(target)
+
+    print(markdown.summary(targets), end='', flush=True)
 
 
 def main():
