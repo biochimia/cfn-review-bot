@@ -319,13 +319,22 @@ class Model:
         next_template = templates[normalize_key(template_reference)]
         template = deep_merge(template, next_template)
 
-      for target_name in stack.get('target', model.default_targets):
+      for target_ref in stack.get('target', model.default_targets):
+        target_name = target_ref
+        regions = None
+        if isinstance(target_ref, dict):
+          target_name = target_ref['name']
+          regions = target_ref['region']
+
         for target in model.targets[target_name]:
           tags = {}
           tags.update(target.tags)
           tags.update(stack['tag'])
 
-          for region in stack.get('region', target.default_regions):
+          if regions is None:
+            regions = stack.get('region', target.default_regions)
+
+          for region in regions:
             target.stacks[region][stack_name] = Stack(
               name=stack_name,
               capabilities=capabilities,

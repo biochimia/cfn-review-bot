@@ -7,8 +7,17 @@ import schema
 from . import aws, util
 
 
+StackTarget = schema.Or(
+  str,
+  {
+    'name': str,
+    # overrides regions defined in the target
+    'region': util.OneOrMany(str),
+  },
+)
+
 StackSchema = schema.Schema({
-  'template': util.OneOrMany(str),
+  'template': util.OneOrMany(StackTarget),
   schema.Optional('name'): str,
   schema.Optional('target'): util.OneOrMany(str),
 
