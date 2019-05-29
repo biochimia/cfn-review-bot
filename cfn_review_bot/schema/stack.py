@@ -17,9 +17,9 @@ StackTarget = schema.Or(
 )
 
 StackSchema = schema.Schema({
-  'template': util.OneOrMany(StackTarget),
+  'template': util.OneOrMany(str),
   schema.Optional('name'): str,
-  schema.Optional('target'): util.OneOrMany(str),
+  schema.Optional('target'): util.OneOrMany(StackTarget),
 
   # overrides regions defined in the target
   schema.Optional('region'): util.OneOrMany(aws.Region),
