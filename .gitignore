@@ -98,6 +98,7 @@ celerybeat-schedule
 .env
 .venv
 .venv-dist
+.venv-test
 env/
 venv/
 ENV/

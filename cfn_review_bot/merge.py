@@ -14,10 +14,18 @@ def _deep_merge_mapping(old, new):
   return merged
 
 
+def _deep_merge_sequence(old, new):
+  return old + new
+
+
 def deep_merge(old, new):
   if (isinstance(old, dict)
       and isinstance(new, dict)):
     return _deep_merge_mapping(old, new)
+
+  if (isinstance(old, list)
+      and isinstance(new, list)):
+    return _deep_merge_sequence(old, new)
 
   if old == new:
     return old
