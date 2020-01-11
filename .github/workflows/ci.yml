@@ -1,0 +1,19 @@
+name: ci
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+    - name: Install dependencies
+      run: make deps-test
+    - name: Lint
+      run: make lint
+    - name: Run tests
+      run: make test
