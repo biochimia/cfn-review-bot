@@ -16,6 +16,18 @@ StackTarget = schema.Or(
     },
 )
 
+StackParameter = schema.Schema({
+  str: schema.And(
+    util.OneOrMany(
+      schema.Or(
+        str,
+        schema.And(int, schema.Use(lambda x: str(x))),
+      ),
+    ),
+    schema.Use(lambda x: ','.join(x)),
+  ),
+})
+
 StackSchema = schema.Schema({
     'template': util.OneOrMany(str),
     schema.Optional('name'): str,
@@ -25,6 +37,6 @@ StackSchema = schema.Schema({
     schema.Optional('region'): util.OneOrMany(aws.Region),
 
     schema.Optional('capability', default=[]): util.OneOrMany(str),
-    schema.Optional('parameter', default={}): {str: str},
+    schema.Optional('parameter', default={}): StackParameter,
     schema.Optional('tag', default={}): {str: str},
 }, name='Stack Description')
