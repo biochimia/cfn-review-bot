@@ -43,51 +43,54 @@ BASEDIR = os.path.dirname(__file__)
 PACKAGE_VERSION_FILE = os.path.join(BASEDIR, 'package-version.json')
 
 
-class VersionInfo(
-  collections.namedtuple('VersionInfo', ['epoch', 'version', 'git_revision'])):
+class VersionInfo(collections.namedtuple('VersionInfo', [
+    'epoch',
+    'version',
+    'git_revision',
+])):
 
-  @property
-  def package_version(self):
-    return '{s.epoch}!{s.version}'.format(s=self)
+    @property
+    def package_version(self):
+        return '{s.epoch}!{s.version}'.format(s=self)
 
 
 def _get_git_revision():
-  git_output = subprocess.check_output(
-    'git describe --always --abbrev=12 --dirty=.dirty'.split(),
-    stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
-  return git_output.strip().decode()
+    git_output = subprocess.check_output(
+        'git describe --always --abbrev=12 --dirty=.dirty'.split(),
+        stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    return git_output.strip().decode()
 
 
 def _get_git_timestamp():
-  git_output = subprocess.check_output(
-    'git log -1 --date=unix --format=format:%cd'.split(),
-    stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
-  return datetime.datetime.utcfromtimestamp(int(git_output))
+    git_output = subprocess.check_output(
+        'git log -1 --date=unix --format=format:%cd'.split(),
+        stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    return datetime.datetime.utcfromtimestamp(int(git_output))
 
 
 def get_version_info():
-  try:
-    return _get_version_info_from_package()
-  except FileNotFoundError:
-    pass
-  return _get_version_info_from_git()
+    try:
+        return _get_version_info_from_package()
+    except FileNotFoundError:
+        pass
+    return _get_version_info_from_git()
 
 
 def _get_version_info_from_git():
-  return VersionInfo(
-    epoch=EPOCH,
-    version=_get_git_timestamp().strftime('%Y%m%d.%H%M%S'),
-    git_revision=_get_git_revision())
+    return VersionInfo(
+        epoch=EPOCH,
+        version=_get_git_timestamp().strftime('%Y%m%d.%H%M%S'),
+        git_revision=_get_git_revision())
 
 
 def _get_version_info_from_package():
-  with open(PACKAGE_VERSION_FILE) as f:
-    data = json.load(f)
-  return VersionInfo(**data)
+    with open(PACKAGE_VERSION_FILE) as f:
+        data = json.load(f)
+    return VersionInfo(**data)
 
 
 def prepare_version_info_for_package():
-  vi = _get_version_info_from_git()
-  with open(PACKAGE_VERSION_FILE, mode='w') as f:
-    json.dump(vi._asdict(), f, ensure_ascii=True, indent=2, sort_keys=True)
-  return vi
+    vi = _get_version_info_from_git()
+    with open(PACKAGE_VERSION_FILE, mode='w') as f:
+        json.dump(vi._asdict(), f, ensure_ascii=True, indent=2, sort_keys=True)
+    return vi
