@@ -24,18 +24,21 @@ deps-dist: .venv-dist/.env-ready
 
 deps-test: .venv-test/.env-ready
 
-dist: clean-dist deps-dist
-	@python setup.py sdist bdist_wheel
+dist: clean-dist deps-dist dist-only
 	@rm -f cfn_review_bot/package-version.json
+
+dist-only: .venv-dist/.env-ready
+	@.venv-dist/bin/python setup.py sdist bdist_wheel
 
 lint: deps-test
 	@.venv-test/bin/flake8 cfn_review_bot --max-line-length=100 --statistics
 
-release: clean-all test dist
-	@.venv-dist/bin/pip install twine
+release: clean-all test dist release-only
+
+release-only: .venv-dist/.env-ready
 	@.venv-dist/bin/twine upload dist/*
 
 test: deps-test
 	@.venv-test/bin/python -m unittest -v
 
-.PHONY: all clean clean-all clean-deps clean-dist clean-test deps-dist deps-test dist lint release test
+.PHONY: all clean clean-all clean-deps clean-dist clean-test deps-dist deps-test dist dist-only lint release release-only test
