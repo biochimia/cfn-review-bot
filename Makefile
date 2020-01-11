@@ -1,4 +1,4 @@
-all: test
+all: lint test dist
 
 .venv-%/.env-ready:
 	$(eval _VENV=$(patsubst .venv-%/.env-ready,%,$@))
