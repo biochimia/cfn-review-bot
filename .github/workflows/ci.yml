@@ -17,3 +17,58 @@ jobs:
       run: make lint
     - name: Run tests
       run: make test
+
+  publish:
+    if: github.ref == 'refs/heads/master'
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+    - name: Install packaging dependencies
+      run: make deps-dist
+    - id: package
+      name: Build packages
+      run: |
+        make dist-only
+        make version-github-action
+    - name: Echo package version
+      run: |
+        echo 'package version: ${{ steps.package.outputs.package_version }}'
+        echo 'git revision: ${{ steps.package.outputs.git_revision }}'
+    - id: github_release
+      name: Create GitHub release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.package.outputs.package_version }}
+        release_name: Release v${{ steps.package.outputs.package_version }}
+    - name: Publish source distribution to Github
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.github_release.outputs.upload_url }}
+        asset_path: dist/cfn-review-bot-${{ steps.package.outputs.package_version }}.tar.gz
+        asset_name: cfn-review-bot-${{ steps.package.outputs.package_version }}.tar.gz
+        asset_content_type: application/gzip
+    - name: Publish wheel to Github
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.github_release.outputs.upload_url }}
+        asset_path: dist/cfn_review_bot-${{ steps.package.outputs.package_version }}-py3-none-any.whl
+        asset_name: cfn_review_bot-${{ steps.package.outputs.package_version }}-py3-none-any.whl
+        asset_content_type: application/zip
+    - name: Publish packages to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: make release-only
