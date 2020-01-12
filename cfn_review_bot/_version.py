@@ -77,9 +77,14 @@ def get_version_info():
 
 
 def _get_version_info_from_git():
+    ts = _get_git_timestamp()
+
+    major = ts.strftime('%Y%m%d')
+    minor = ts.strftime('%H%M%S').lstrip('0')
+
     return VersionInfo(
         epoch=EPOCH,
-        version=_get_git_timestamp().strftime('%Y%m%d.%H%M%S'),
+        version=f'{major}.{minor}',
         git_revision=_get_git_revision())
 
 
