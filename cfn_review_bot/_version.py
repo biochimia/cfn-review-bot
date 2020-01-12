@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 Automated package versioning from source control.
 
@@ -30,11 +31,13 @@ merge commit is created at the time a feature is accepted into the main branch
 can provide this invariant.
 '''
 
+# !! Standard library includes, ONLY !! #
 import collections
 import datetime
 import json
 import os
 import subprocess
+import sys
 
 
 EPOCH = '1'
@@ -99,3 +102,13 @@ def prepare_version_info_for_package():
     with open(PACKAGE_VERSION_FILE, mode='w') as f:
         json.dump(vi._asdict(), f, ensure_ascii=True, indent=2, sort_keys=True)
     return vi
+
+
+if __name__ == '__main__':
+    version = get_version_info()
+    print(f'cfn-review-bot version {version.package_version} (git: {version.git_revision})')
+    if 'github-action' in sys.argv:
+        print(
+            '\n'
+            f'::set-output name=package_version::{version.package_version}\n'
+            f'::set-output name=git_revision::{version.git_revision}')

@@ -41,4 +41,7 @@ release-only: .venv-dist/.env-ready
 test: deps-test
 	@.venv-test/bin/python -m unittest -v
 
-.PHONY: all clean clean-all clean-deps clean-dist clean-test deps-dist deps-test dist dist-only lint release release-only test
+version-github-action:
+	@python cfn_review_bot/_version.py github-action
+
+.PHONY: all clean clean-all clean-deps clean-dist clean-test deps-dist deps-test dist dist-only lint release release-only test version-github-action
