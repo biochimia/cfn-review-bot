@@ -114,7 +114,6 @@ class Session:
         deployed.is_outdated = (
             self.get_content_hash(stack) != deployed.content_hash)
         if deployed.is_outdated:
-            print(stack.name, self.get_content_hash(stack), deployed.content_hash)
             return ChangeSet(ChangeSetType.UPDATE, stack.name)
 
     def prepare_template_body(self, stack):
