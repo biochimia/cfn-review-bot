@@ -21,6 +21,7 @@ StackParameter = schema.Schema({
     util.OneOrMany(
       schema.Or(
         str,
+        schema.And(bool, schema.Use(lambda x: 'true' if x else 'false')),
         schema.And(int, schema.Use(lambda x: str(x))),
       ),
     ),

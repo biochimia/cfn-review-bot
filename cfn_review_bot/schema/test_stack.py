@@ -22,11 +22,25 @@ class TestStackSchema(unittest.TestCase):
         self.assertEqual(
           StackSchema.validate({
             'template': 'some-template',
-            'parameter': {'a': 1},
+            'parameter': {'a': 0, 'b': 1},
           }),
           {
             'template': ['some-template'],
-            'parameter': {'a': '1'},
+            'parameter': {'a': '0', 'b': '1'},
+            'capability': [],
+            'tag': {},
+          },
+        )
+
+    def test_parameter_bool_value_is_converted_to_string(self):
+        self.assertEqual(
+          StackSchema.validate({
+            'template': 'some-template',
+            'parameter': {'a': True, 'b': False},
+          }),
+          {
+            'template': ['some-template'],
+            'parameter': {'a': 'true', 'b': 'false'},
             'capability': [],
             'tag': {},
           },
@@ -50,11 +64,25 @@ class TestStackSchema(unittest.TestCase):
         self.assertEqual(
           StackSchema.validate({
             'template': 'some-template',
-            'parameter': {'a': [1, 2, 3]},
+            'parameter': {'a': [0, 1, 2, 3]},
           }),
           {
             'template': ['some-template'],
-            'parameter': {'a': '1,2,3'},
+            'parameter': {'a': '0,1,2,3'},
+            'capability': [],
+            'tag': {},
+          },
+        )
+
+    def test_parameter_bool_list_is_converted_to_string(self):
+        self.assertEqual(
+          StackSchema.validate({
+            'template': 'some-template',
+            'parameter': {'a': [True, False, False, True]},
+          }),
+          {
+            'template': ['some-template'],
+            'parameter': {'a': 'true,false,false,true'},
             'capability': [],
             'tag': {},
           },
