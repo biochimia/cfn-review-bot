@@ -310,6 +310,8 @@ class Model:
             model.templates_root, schema=CfnTemplateSchema))
 
         for stack_name, stack in stacks.items():
+            stack.setdefault('name', stack_name)
+
             capabilities = stack['capability']
             parameters = stack['parameter']
 
@@ -334,8 +336,8 @@ class Model:
                         regions = stack.get('region', target.default_regions)
 
                     for region in regions:
-                        target.stacks[region][stack_name] = Stack(
-                            name=stack_name,
+                        target.stacks[region][stack['name']] = Stack(
+                            name=stack['name'],
                             capabilities=capabilities,
                             parameters=parameters,
                             tags=tags,
