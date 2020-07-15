@@ -80,7 +80,7 @@ class ChangeSet:
         )
 
     @property
-    def failed(self):
+    def is_failed(self):
         return (
             self.detail is not None
             and self.detail['Status'] == 'FAILED')
