@@ -33,8 +33,8 @@ def process_arguments():
     parser.add_argument(
         '--project', default='', help='''A project identifier. This can be used to
         distinguish CloudFormation stacks managed by independent cfn-review-bot
-        setups. Namely, it stacks managed in other projects from being marked
-        orphaned.''')
+        setups. Namely, it prevents stacks managed in other projects from being
+        marked orphaned.''')
     parser.add_argument(
         '--target', action='append', help='''Add named target to list of targets to
         process. If no target is specified, then all configured targets are
