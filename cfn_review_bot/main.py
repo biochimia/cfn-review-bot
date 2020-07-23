@@ -63,7 +63,7 @@ def _default_session_prefix():
 
 
 def _session_name(session_prefix, target_name, project):
-    result = '{}+{}'.format(session_prefix, target_name, project)
+    result = '{}+{}'.format(session_prefix, target_name)
     if project:
         result += '@{}'.format(project)
     return '-'.join(VALID_SESSION_NAME.findall(result))

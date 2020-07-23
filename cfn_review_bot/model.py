@@ -16,6 +16,9 @@ from .schema.stack import StackSchema
 
 DEFAULT_ROLE_NAME = 'CfnReviewBot'
 
+NOOP_CHANGESET_STATUS_REASON = '''The submitted information didn't contain ''' \
+  '''changes. Submit different information to create a change set.'''
+
 
 AccountId = str
 Capability = str
@@ -89,7 +92,7 @@ class ChangeSet:
     def is_noop(self):
         return (
             self.is_failed
-            and self.detail['StatusReason'] == '''The submitted information didn't contain changes. Submit different information to create a change set.''')
+            and self.detail['StatusReason'] == NOOP_CHANGESET_STATUS_REASON)
 
 
 @dataclass
@@ -207,7 +210,7 @@ class SingleRegionTarget:
         lines = []
 
         if results is None:
-            lines += [f'Stacks: (not analysed)']
+            lines += ['Stacks: (not analysed)']
         else:
             lines += [f'Stacks: {results.stack_summary}']
 
