@@ -85,6 +85,12 @@ class ChangeSet:
             self.detail is not None
             and self.detail['Status'] == 'FAILED')
 
+    @property
+    def is_noop(self):
+        return (
+            self.is_failed
+            and self.detail['StatusReason'] == '''The submitted information didn't contain changes. Submit different information to create a change set.''')
+
 
 @dataclass
 class Stack:

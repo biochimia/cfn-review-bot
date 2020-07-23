@@ -23,7 +23,7 @@
 
 {%    endif %}
 <details>
-<summary>{{ ':x:' if change_set.is_failed }}{{ ':sparkles:' if change_set.type == change_set.type.CREATE }}<code>{{ change_set.detail.StackName }}</code> [<a href="{{ change_set.url }}">change set</a>]</summary>
+<summary>{% if change_set.is_failed %}{{ ':woman_shrugging:' if change_set.is_noop else ':x:' }}{% endif %}{{ ':sparkles:' if change_set.type == change_set.type.CREATE }}<code>{{ change_set.detail.StackName }}</code> [<a href="{{ change_set.url }}">change set</a>]</summary>
 
 {%    if change_set.detail.Status != 'CREATE_COMPLETE' %}
 #### Change Set Status: `{{ change_set.detail.Status }}`
