@@ -54,6 +54,11 @@ class OpaqueTagValue:
         self.tag = tag
         self.value = value
 
+    def __eq__(self, other):
+        if self.__class__ == other.__class__:
+            return (self.tag == other.tag) and (self.value == other.value)
+        return NotImplemented
+
 
 class OpaqueTagMapping(OpaqueTagValue):
     pass

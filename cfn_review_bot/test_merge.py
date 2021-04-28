@@ -1,5 +1,6 @@
 import unittest
 
+from .loader import OpaqueTagMapping, OpaqueTagScalar, OpaqueTagSequence
 from .merge import deep_merge
 
 
@@ -38,3 +39,48 @@ class TestDeepMerge(unittest.TestCase):
                 },
             },
         )
+
+    def assertCannotMerge(self, lhs, rhs):
+        with self.assertRaises(Exception) as cm:
+            deep_merge(lhs, rhs)
+
+        self.assertEqual(str(cm.exception), f'Unable to merge {lhs} with {rhs}')
+
+    def test_merging_opaque_mappings_checks_equality(self):
+        map1 = OpaqueTagMapping('map-tag', dict(a=1, b=2, c=3))
+        map2 = OpaqueTagMapping('map-tag', dict(a=1, b=2, c=3))
+        map3 = OpaqueTagMapping('map-tag2', dict(a=1, b=2, c=3))
+        map4 = OpaqueTagMapping('map-tag', dict(a=1, b=2))
+
+        self.assertEqual(deep_merge(map1, map2), map1)
+        self.assertCannotMerge(map1, map3)
+        self.assertCannotMerge(map1, map4)
+
+    def test_merging_opaque_sequences_checks_equality(self):
+        lst1 = OpaqueTagSequence('sequence-tag', list((1, 2, 3)))
+        lst2 = OpaqueTagSequence('sequence-tag', list((1, 2, 3)))
+        lst3 = OpaqueTagSequence('sequence-tag2', list((1, 2, 3)))
+        lst4 = OpaqueTagSequence('sequence-tag', list((1, 2)))
+
+        self.assertEqual(deep_merge(lst1, lst2), lst1)
+        self.assertCannotMerge(lst1, lst3)
+        self.assertCannotMerge(lst1, lst4)
+
+    def test_merging_opaque_scalars_checks_equality(self):
+        scl1 = OpaqueTagScalar('scalar-tag', 43)
+        scl2 = OpaqueTagScalar('scalar-tag', 43)
+        scl3 = OpaqueTagScalar('scalar-tag2', 43)
+        scl4 = OpaqueTagScalar('scalar-tag', 44)
+
+        self.assertEqual(deep_merge(scl1, scl2), scl1)
+        self.assertCannotMerge(scl1, scl3)
+        self.assertCannotMerge(scl1, scl4)
+
+    def test_merging_opaque_values_checks_the_value_type(self):
+        map1 = OpaqueTagMapping(None, None)
+        scl1 = OpaqueTagScalar(None, None)
+        lst1 = OpaqueTagSequence(None, None)
+
+        self.assertCannotMerge(map1, lst1)
+        self.assertCannotMerge(lst1, scl1)
+        self.assertCannotMerge(scl1, map1)
