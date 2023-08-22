@@ -110,22 +110,26 @@ def _main():
         targets=params.target, regions=params.region, stacks=params.stack))
 
     for target in targets:
-        print(target.header, file=sys.stderr, flush=True)
+        print(target.header + ' [ANALYSING]', file=sys.stderr, flush=True)
 
         target.cfn_session = setup_session(
             target, session, session_prefix, params.project)
         target.cfn_session.analyse_target(target)
 
         if not params.dry_run:
+            print(target.header + ' [PREPARING CHANGE SETS]', file=sys.stderr, flush=True)
             target.cfn_session.prepare_change_sets(target)
 
+    if not params.dry_run:
+        for target in targets:
+            print(target.header + ' [WAITING FOR CHANGE SETS]', file=sys.stderr, flush=True)
+            target.cfn_session.wait_for_ready(target)
+
+    for target in targets:
+        print(target.header, file=sys.stderr, flush=True)
         print(target, file=sys.stderr, flush=True)
 
     if params.markdown_summary:
-        if not params.dry_run:
-            for target in targets:
-                target.cfn_session.wait_for_ready(target)
-
         print(markdown.summary(targets), end='', flush=True)
 
 

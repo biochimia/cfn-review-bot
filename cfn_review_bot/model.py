@@ -113,6 +113,7 @@ class StackStats:
     adopted: int = 0
     orphaned: int = 0
     unmanaged: int = 0
+    noop: int = 0
 
     def __str__(self):
         parts = []
@@ -123,6 +124,8 @@ class StackStats:
             parts += [f'{self.updated} updated']
             if self.adopted:
                 parts[-1] += f' ({self.adopted} adopted)'
+            if self.noop:
+                parts[-1] += f', {self.noop} with no-op changes'
         if self.orphaned:
             parts += [f'{self.orphaned} orphaned']
 
@@ -228,6 +231,8 @@ class SingleRegionTarget:
                     lines += ['  (change set was not created)']
                 else:
                     lines += [f'  {change_set.id}']
+                    if change_set.is_noop:
+                        lines[-1] += ' [NO-OP]'
 
             lines += ['']
 

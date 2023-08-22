@@ -18,12 +18,12 @@
 {%    if target.analysis_results.failed_stacks %}
 **Failed Stacks:** `{{ '`, `'.join(target.analysis_results.failed_stacks) }}`
 {%    endif %}
-{%  for change_set in target.change_sets %}
+{%  for change_set in target.change_sets if not change_set.is_noop %}
 {%    if loop.first %}
 
 {%    endif %}
 <details>
-<summary>{% if change_set.is_failed %}{{ ':woman_shrugging:' if change_set.is_noop else ':x:' }}{% endif %}{{ ':sparkles:' if change_set.type == change_set.type.CREATE }}<code>{{ change_set.detail.StackName }}</code> [<a href="{{ change_set.url }}">change set</a>]</summary>
+<summary>{% if change_set.is_failed %}:x:{% endif %}{{ ':sparkles:' if change_set.type == change_set.type.CREATE }}<code>{{ change_set.detail.StackName }}</code> [<a href="{{ change_set.url }}">change set</a>]</summary>
 
 {%    if change_set.detail.Status != 'CREATE_COMPLETE' %}
 #### Change Set Status: `{{ change_set.detail.Status }}`

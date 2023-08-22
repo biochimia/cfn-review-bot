@@ -203,6 +203,9 @@ class Session:
         for change_set in target.change_sets:
             self.wait_for_change_set(change_set)
 
+            if change_set.is_noop:
+                target.analysis_results.stack_summary.noop += 1
+
     def wait_for_change_set(self, change_set: ChangeSet):
         if change_set.id is None:
             return
