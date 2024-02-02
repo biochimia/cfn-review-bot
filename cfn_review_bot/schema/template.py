@@ -16,6 +16,6 @@ CfnTemplateSchema = schema.Schema({
     schema.Optional('Mappings'): {str: dict},
     schema.Optional('Conditions'): {str: util.Any},
     schema.Optional('Transform'): util.Any,
-    schema.Optional('Resources'): {str: dict},
+    schema.Optional('Resources'): {str: util.Any},
     schema.Optional('Outputs'): {str: dict},
 }, name='CloudFormation Template')
