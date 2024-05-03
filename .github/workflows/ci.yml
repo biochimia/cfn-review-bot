@@ -48,12 +48,10 @@ jobs:
       with:
         name: Release v${{ steps.package.outputs.package_version }}
         tag_name: v${{ steps.package.outputs.package_version }}
-        prerelease: true
         files: |
           dist/cfn-review-bot-${{ steps.package.outputs.package_version }}.tar.gz
           dist/cfn_review_bot-${{ steps.package.outputs.package_version }}-py3-none-any.whl
         fail_on_unmatched_files: true
-        generate_release_notes: true
 
     - name: Publish packages to PyPI
       env:
