@@ -68,7 +68,7 @@ def _get_git_timestamp():
     git_output = subprocess.check_output(
         'git log -1 --date=unix --format=format:%cd'.split(),
         stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
-    return datetime.datetime.utcfromtimestamp(int(git_output))
+    return datetime.datetime.fromtimestamp(int(git_output), datetime.timezone.utc)
 
 
 def get_version_info():
