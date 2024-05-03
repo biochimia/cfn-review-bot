@@ -106,9 +106,12 @@ def prepare_version_info_for_package():
 
 if __name__ == '__main__':
     version = get_version_info()
+
     print(f'cfn-review-bot version {version.package_version} (git: {version.git_revision})')
+
     if 'github-action' in sys.argv:
-        print(
-            '\n'
-            f'::set-output name=package_version::{version.package_version}\n'
-            f'::set-output name=git_revision::{version.git_revision}')
+        outfile = os.environ.get('GITHUB_OUTPUT', sys.stdout.fileno())
+        with open(outfile, 'a', closefd=not isinstance(outfile, int)) as out:
+            out.write(
+                f'package_version={version.package_version}\n'
+                f'git_revision={version.git_revision}\n')
