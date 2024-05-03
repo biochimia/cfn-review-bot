@@ -217,8 +217,8 @@ class Session:
                 change_set.detail = detail
                 return
 
-            if (datetime.datetime.now() - start).total_seconds() > 60:
+            if (datetime.datetime.now() - start).total_seconds() > 180:
                 raise TimeoutError(
                     f'Timeout waiting for change set {change_set.id} to become ready')
 
-            time.sleep(5)
+            time.sleep(15)
